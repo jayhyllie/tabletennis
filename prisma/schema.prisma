@@ -10,11 +10,77 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
+model Player {
+    id        String   @id @default(uuid())
+    name      String
+    email     String
+    createdAt DateTime @default(now())
+
+    PlayerGroup PlayerGroup[]
+    player1Matches Match[] @relation("player1Matches")
+    player2Matches Match[] @relation("player2Matches")
+    player1PlayoffMatches PlayoffMatch[] @relation("player1PlayoffMatches")
+    player2PlayoffMatches PlayoffMatch[] @relation("player2PlayoffMatches")
+}
+
+model Group {
+    id        String   @id @default(uuid())
     name      String
     createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
 
-    @@index([name])
+    PlayerGroup PlayerGroup[]
+    Match Match[]
+    PlayoffMatch PlayoffMatch[]
 }
+
+model PlayerGroup {
+    playerId String
+    groupId  String
+    player   Player   @relation(fields: [playerId], references: [id])
+    group    Group    @relation(fields: [groupId], references: [id])
+
+    @@id([playerId, groupId])
+}
+
+model Match {
+    id        String   @id @default(uuid())
+    player1Id String
+    player2Id String
+    groupId   String?
+    round     Int
+    scheduledTime DateTime?
+    completed   Boolean @default(false)
+    isPlayoff   Boolean @default(false)
+
+    player1 Player @relation("player1Matches", fields: [player1Id], references: [id])
+    player2 Player @relation("player2Matches", fields: [player2Id], references: [id])
+    group   Group? @relation(fields: [groupId], references: [id])
+    scores Score[]
+}
+
+model Score {
+    matchId String @id
+    player1Score Int
+    player2Score Int
+    winnerId String?
+
+    match Match @relation(fields: [matchId], references: [id])
+    playoffMatch PlayoffMatch? @relation(fields: [matchId], references: [matchId])
+}
+
+model PlayoffMatch {
+    matchId        String   @id @default(uuid())
+    player1Id String
+    player2Id String
+    groupId   String?
+    round     Int
+    scheduledTime DateTime?
+    completed   Boolean @default(false)
+    isPlayoff   Boolean @default(false)
+
+    player1 Player @relation("player1PlayoffMatches", fields: [player1Id], references: [id])
+    player2 Player @relation("player2PlayoffMatches", fields: [player2Id], references: [id])
+    group   Group? @relation(fields: [groupId], references: [id])
+    scores Score[]
+}
+
