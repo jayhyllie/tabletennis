@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -10,8 +9,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import type { Group } from "@prisma/client";
 import { api } from "@/trpc/react";
 
 type PlayerStanding = {
@@ -29,11 +26,6 @@ type PlayerStanding = {
 export function StandingsList() {
   const { data: groups, isPending: isLoadingGroups } =
     api.group.getAll.useQuery();
-  const [standings, setStandings] = useState<Record<string, PlayerStanding[]>>(
-    {},
-  );
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
 
   if (isLoadingGroups) {
     return <div className="py-4 text-center">Laddar resultat...</div>;
@@ -44,6 +36,57 @@ export function StandingsList() {
       <div className="text-muted-foreground py-4 text-center">
         Inga grupper skapade än
       </div>
+    );
+  }
+
+  // Calculate standings for each group
+  const standings: Record<string, PlayerStanding[]> = {};
+
+  for (const group of groups) {
+    const playerStats = new Map<string, PlayerStanding>();
+
+    // Initialize player standings
+    group.PlayerGroup.forEach(({ player }) => {
+      playerStats.set(player.id, {
+        player,
+        played: 0,
+        won: 0,
+        lost: 0,
+        points: 0,
+      });
+    });
+
+    // Calculate standings from matches
+    group.Match.forEach((match) => {
+      const scores = match.scores;
+      if (scores.length !== 1) return;
+      const score = scores[0];
+
+      const player1Id = match.player1Id;
+      const player2Id = match.player2Id;
+
+      const player1Stats = playerStats.get(player1Id);
+      const player2Stats = playerStats.get(player2Id);
+
+      if (player1Stats && player2Stats) {
+        player1Stats.played++;
+        player2Stats.played++;
+
+        if (score?.player1Score! > score?.player2Score!) {
+          player1Stats.won++;
+          player2Stats.lost++;
+          player1Stats.points += 2;
+        } else {
+          player2Stats.won++;
+          player1Stats.lost++;
+          player2Stats.points += 2;
+        }
+      }
+    });
+
+    // Sort players by points
+    standings[group.id] = Array.from(playerStats.values()).sort(
+      (a, b) => b.points - a.points,
     );
   }
 
@@ -60,8 +103,8 @@ export function StandingsList() {
                 <TableRow>
                   <TableHead>Spelare</TableHead>
                   <TableHead className="text-center">Spelade</TableHead>
-                  <TableHead className="text-center">Vunnen</TableHead>
-                  <TableHead className="text-center">Förlorad</TableHead>
+                  <TableHead className="text-center">Vinst</TableHead>
+                  <TableHead className="text-center">Förlust</TableHead>
                   <TableHead className="text-center">Poäng</TableHead>
                 </TableRow>
               </TableHeader>

@@ -22,8 +22,8 @@ export default async function Home() {
       <div className="container mx-auto py-10">
         <div className="mb-10 flex flex-col items-center text-center">
           <TableTennis className="text-primary mb-4 h-16 w-16" />
-          <h1 className="text-4xl font-bold tracking-tight">
-            Pingis turnering
+          <h1 className="text-4xl font-bold tracking-tight dark:text-white">
+            Sogeti Pingis
           </h1>
           <p className="text-muted-foreground mt-2 text-xl">
             Hantera din pingis turnering med lätthet

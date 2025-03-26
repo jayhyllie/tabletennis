@@ -88,7 +88,7 @@ export function ScheduleList() {
                       {match.completed ? (
                         <Badge variant="default">Slutförd</Badge>
                       ) : (
-                        <Badge variant="outline">Paus</Badge>
+                        <Badge variant="outline">Ej spelad</Badge>
                       )}
                     </TableCell>
                   </TableRow>

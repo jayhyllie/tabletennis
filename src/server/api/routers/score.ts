@@ -15,26 +15,53 @@ export const scoreRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const match = await ctx.db.match.findUnique({
-        where: { id: input.matchId },
-      });
-      if (!match) {
-        throw new Error("Match not found");
+      try {
+        // First verify the match exists
+        const match = await ctx.db.match.findUnique({
+          where: { id: input.matchId },
+        });
+
+        if (!match) {
+          throw new Error(`Match with ID ${input.matchId} not found`);
+        }
+
+        // Determine winner
+        const winnerId =
+          input.player1Score > input.player2Score
+            ? match.player1Id
+            : input.player2Score > input.player1Score
+              ? match.player2Id
+              : null;
+
+        // Create or update score
+        const score = await ctx.db.score.upsert({
+          where: {
+            matchId: input.matchId,
+          },
+          update: {
+            player1Score: input.player1Score,
+            player2Score: input.player2Score,
+            winnerId,
+          },
+          create: {
+            matchId: input.matchId,
+            player1Score: input.player1Score,
+            player2Score: input.player2Score,
+            winnerId,
+          },
+        });
+
+        // Update match status
+        await ctx.db.match.update({
+          where: { id: input.matchId },
+          data: { completed: true },
+        });
+
+        return score;
+      } catch (error) {
+        console.error("Score creation error:", error);
+        throw error;
       }
-
-      const winnerId =
-        input.player1Score > input.player2Score
-          ? match.player1Id
-          : match.player2Id;
-
-      return ctx.db.score.create({
-        data: {
-          matchId: input.matchId,
-          player1Score: input.player1Score,
-          player2Score: input.player2Score,
-          winnerId: winnerId,
-        },
-      });
     }),
   getByMatchId: publicProcedure
     .input(z.object({ matchId: z.string() }))

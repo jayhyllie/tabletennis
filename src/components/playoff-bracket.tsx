@@ -5,8 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import type { Match, Player, Score } from "@prisma/client";
 import { api } from "@/trpc/react";
+import { Button } from "@/components/ui/button";
 
 export function PlayoffBracket() {
+  const utils = api.useUtils();
+  const { toast } = useToast();
+
   const { data: matches, isPending: isLoadingMatches } =
     api.match.getAll.useQuery();
   const { data: players, isPending: isLoadingPlayers } =
@@ -14,21 +18,53 @@ export function PlayoffBracket() {
   const { data: scores, isPending: isLoadingScores } =
     api.score.getAll.useQuery();
 
+  const { mutate: generatePlayoffs, isPending: isGenerating } =
+    api.match.generatePlayoffs.useMutation({
+      onSuccess: () => {
+        utils.match.getAll.invalidate();
+        toast({
+          title: "Slutspel genererat",
+          description: "Slutspelsmatcherna har skapats",
+        });
+      },
+      onError: (error) => {
+        toast({
+          variant: "destructive",
+          title: "Fel",
+          description: error.message,
+        });
+      },
+    });
+
   if (isLoadingMatches || isLoadingPlayers || isLoadingScores) {
     return <div className="py-4 text-center">Laddar slutspel...</div>;
   }
 
-  if (!matches?.length) {
+  const playoffMatches = matches?.filter((match) => match.isPlayoff) ?? [];
+
+  if (
+    !playoffMatches.length &&
+    matches &&
+    matches.length > 0 &&
+    matches?.every((match) => match.completed)
+  ) {
     return (
-      <div className="text-muted-foreground py-4 text-center">
-        Inga slutspelmatcher genererade än
+      <div className="space-y-4">
+        <div className="text-muted-foreground py-4 text-center">
+          Inga slutspelmatcher genererade än
+        </div>
+        <div className="flex justify-center">
+          <Button onClick={() => generatePlayoffs()} disabled={isGenerating}>
+            {isGenerating ? "Genererar..." : "Generera slutspel"}
+          </Button>
+        </div>
       </div>
     );
   }
 
   // Group matches by round
   const matchesByRound: Record<number, Match[]> = {};
-  matches.forEach((match) => {
+  playoffMatches.forEach((match) => {
     if (!matchesByRound[match.round]) {
       matchesByRound[match.round] = [];
     }

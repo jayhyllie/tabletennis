@@ -59,13 +59,15 @@ model Match {
 }
 
 model Score {
-    matchId String @id
+    id        String   @id @default(uuid())
+    matchId String
     player1Score Int
     player2Score Int
     winnerId String?
 
     match Match @relation(fields: [matchId], references: [id])
-    playoffMatch PlayoffMatch? @relation(fields: [matchId], references: [matchId])
+
+    @@unique([matchId])
 }
 
 model PlayoffMatch {
@@ -81,6 +83,5 @@ model PlayoffMatch {
     player1 Player @relation("player1PlayoffMatches", fields: [player1Id], references: [id])
     player2 Player @relation("player2PlayoffMatches", fields: [player2Id], references: [id])
     group   Group? @relation(fields: [groupId], references: [id])
-    scores Score[]
 }
 

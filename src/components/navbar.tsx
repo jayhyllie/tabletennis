@@ -26,7 +26,7 @@ export function Navbar() {
         <Link href="/" className="mr-6 flex items-center gap-2">
           <TableTennis className="h-6 w-6 dark:text-white" />
           <span className="hidden font-bold dark:text-white sm:inline-block">
-            Sogeti Pingis Turnering
+            Sogeti Pingis
           </span>
         </Link>
         <nav className="flex items-center space-x-1 overflow-auto md:space-x-2">

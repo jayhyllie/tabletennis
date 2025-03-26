@@ -15,23 +15,27 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { createRandomGroups } from "@/lib/actions";
 import { api } from "@/trpc/react";
 
 const formSchema = z.object({
-  numGroups: z.coerce
-    .number()
-    .int()
-    .min(1, {
-      message: "Antal grupper måste vara minst 1.",
-    })
-    .max(10, {
-      message: "Antal grupper måste vara högst 10.",
-    }),
+  numGroups: z
+    .string()
+    .transform((val) => Number(val))
+    .pipe(
+      z
+        .number()
+        .int()
+        .min(1, {
+          message: "Antal grupper måste vara minst 1.",
+        })
+        .max(10, {
+          message: "Antal grupper måste vara högst 10.",
+        }),
+    ),
 });
 
 export function GroupForm() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const utils = api.useUtils();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -41,28 +45,26 @@ export function GroupForm() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    try {
-      await createRandomGroups(values.numGroups);
-      toast({
-        title: "Lyckades",
-        description: `${values.numGroups} grupper skapade`,
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Misslyckades att skapa grupper",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
+  const { mutate: createRandomGroups, isPending: isCreating } =
+    api.group.createRandomGroups.useMutation({
+      onSuccess: () => {
+        utils.group.getAll.invalidate();
+        toast({
+          title: "Lyckades",
+          description: `${form.getValues().numGroups} grupper skapade`,
+        });
+      },
+    });
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const numGroups = Number(form.getValues().numGroups);
+          createRandomGroups({ numGroups });
+        }}
+        className="space-y-4"
+      >
         <FormField
           control={form.control}
           name="numGroups"
@@ -76,8 +78,8 @@ export function GroupForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Skapar..." : "Skapa slumpmässiga grupper"}
+        <Button type="submit" className="w-full" disabled={isCreating}>
+          {isCreating ? "Skapar..." : "Skapa slumpmässiga grupper"}
         </Button>
       </form>
     </Form>

@@ -24,6 +24,8 @@ import type { Match, Player, Group, Score } from "@prisma/client";
 import { api } from "@/trpc/react";
 
 export function MatchList() {
+  const utils = api.useUtils();
+
   const { data: matches, isPending: isLoadingMatches } =
     api.match.getAll.useQuery();
   const { data: players, isPending: isLoadingPlayers } =
@@ -34,7 +36,36 @@ export function MatchList() {
     api.score.getAll.useQuery();
 
   const { mutate: createScore, isPending: isSubmitting } =
-    api.score.create.useMutation();
+    api.score.create.useMutation({
+      onSuccess: () => {
+        utils.score.getAll.invalidate();
+        utils.match.getAll.invalidate();
+        setDialogOpen(false);
+      },
+      onError: (error) => {
+        console.error(error);
+      },
+    });
+
+  const { mutate: resetMatches, isPending: isResetting } =
+    api.match.resetAllMatches.useMutation({
+      onSuccess: () => {
+        utils.score.getAll.invalidate();
+        utils.match.getAll.invalidate();
+        toast({
+          title: "Återställt",
+          description: "Alla matcher har återställts",
+        });
+      },
+      onError: (error) => {
+        console.error(error);
+        toast({
+          variant: "destructive",
+          title: "Fel",
+          description: "Kunde inte återställa matcherna",
+        });
+      },
+    });
 
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [player1Score, setPlayer1Score] = useState<number>(0);
@@ -86,28 +117,28 @@ export function MatchList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Player 1</TableHead>
-              <TableHead>Player 2</TableHead>
-              <TableHead>Group</TableHead>
-              <TableHead>Score</TableHead>
+              <TableHead>Spelare 1</TableHead>
+              <TableHead>Spelare 2</TableHead>
+              <TableHead>Grupp</TableHead>
+              <TableHead>Resultat</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {matches.map((match) => (
               <TableRow key={match.id}>
                 <TableCell>
-                  {playerMap.get(match.player1Id) || "Unknown Player"}
+                  {playerMap.get(match.player1Id) || "Okänd spelare"}
                 </TableCell>
                 <TableCell>
-                  {playerMap.get(match.player2Id) || "Unknown Player"}
+                  {playerMap.get(match.player2Id) || "Okänd spelare"}
                 </TableCell>
                 <TableCell>
                   {match.isPlayoff ? (
-                    <Badge variant="secondary">Playoff</Badge>
+                    <Badge variant="secondary">Slutspel</Badge>
                   ) : (
-                    groupMap.get(match.groupId || "") || "Unknown Group"
+                    groupMap.get(match.groupId || "") || "Okänd grupp"
                   )}
                 </TableCell>
                 <TableCell>
@@ -117,24 +148,35 @@ export function MatchList() {
                 </TableCell>
                 <TableCell>
                   {match.completed ? (
-                    <Badge variant="default">Completed</Badge>
+                    <Badge variant="default">Slutförd</Badge>
                   ) : (
-                    <Badge variant="outline">Pending</Badge>
+                    <Badge variant="outline">Ej spelad</Badge>
                   )}
                 </TableCell>
                 <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openScoreDialog(match)}
-                  >
-                    {match.completed ? "Redigera resultat" : "Spara resultat"}
-                  </Button>
+                  {!match.completed && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openScoreDialog(match)}
+                    >
+                      Redigera resultat
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <Button
+          variant="destructive"
+          onClick={() => resetMatches()}
+          disabled={isResetting}
+        >
+          {isResetting ? "Återställer..." : "Återställ alla matcher"}
+        </Button>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -178,8 +220,8 @@ export function MatchList() {
               onClick={() =>
                 createScore({
                   matchId: selectedMatch?.id || "",
-                  player1Score,
-                  player2Score,
+                  player1Score: player1Score || 0,
+                  player2Score: player2Score || 0,
                 })
               }
               disabled={isSubmitting}

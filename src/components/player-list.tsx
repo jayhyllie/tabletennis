@@ -61,17 +61,16 @@ export function PlayerList() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Registered</TableHead>
-            <TableHead className="w-[80px]">Actions</TableHead>
+            <TableHead>Namn</TableHead>
+            {/* <TableHead>Email</TableHead> */}
+            <TableHead>Registrerad</TableHead>
+            <TableHead className="w-[80px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {players?.map((player) => (
             <TableRow key={player.id}>
               <TableCell className="font-medium">{player.name}</TableCell>
-              <TableCell>{player.email}</TableCell>
               <TableCell>
                 {new Date(player.createdAt).toLocaleDateString()}
               </TableCell>
