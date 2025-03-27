@@ -2,49 +2,46 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { TableIcon as TableTennis } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import {
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuLink,
+} from "@/components/ui/navigation-menu";
+
+export const navItems = [
+  { name: "Start", href: "/" },
+  { name: "Spelare", href: "/players" },
+  { name: "Grupper", href: "/groups" },
+  { name: "Schema", href: "/schedule" },
+  { name: "Matcher", href: "/matches" },
+  { name: "Poängställning", href: "/standings" },
+  { name: "Slutspel", href: "/playoffs" },
+];
 
 export function Navbar() {
   const pathname = usePathname();
 
-  const navItems = [
-    { name: "Start", href: "/" },
-    { name: "Spelare", href: "/players" },
-    { name: "Grupper", href: "/groups" },
-    { name: "Schema", href: "/schedule" },
-    { name: "Matcher", href: "/matches" },
-    { name: "Poängställning", href: "/standings" },
-    { name: "Slutspel", href: "/playoffs" },
-  ];
-
   return (
-    <div className="flex h-14 items-center">
-      <Link href="/" className="mr-6 flex items-center gap-2">
-        <TableTennis className="h-6 w-6 dark:text-white" />
-        <span className="hidden font-bold dark:text-white sm:inline-block">
-          Sogeti Pingis
-        </span>
-      </Link>
-      <nav className="flex items-center space-x-1 overflow-auto md:space-x-2">
+    <NavigationMenu className="hidden md:flex">
+      <NavigationMenuList>
         {navItems.map((item) => (
-          <Button
-            key={item.href}
-            variant={pathname === item.href ? "default" : "ghost"}
-            size="sm"
-            className={cn(
-              "text-sm",
-              pathname === item.href
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground",
-            )}
-            asChild
-          >
-            <Link href={item.href}>{item.name}</Link>
-          </Button>
+          <NavigationMenuItem key={item.href}>
+            <NavigationMenuLink
+              asChild
+              className={cn(
+                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors",
+                pathname === item.href
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              <Link href={item.href}>{item.name}</Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
         ))}
-      </nav>
-    </div>
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 }
