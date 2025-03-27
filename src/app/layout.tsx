@@ -11,8 +11,6 @@ import {
   ClerkProvider,
   SignedIn,
   SignedOut,
-  SignInButton,
-  SignUpButton,
   UserButton,
   useUser,
   RedirectToSignIn,
