@@ -33,7 +33,11 @@ function ClerkAuthWrapper({ children }: { children: React.ReactNode }) {
     if (isLoaded && user) {
       createPlayer({
         clerkId: user.id,
-        name: user.fullName ?? user.username ?? "Unknown",
+        name:
+          user.fullName ??
+          user.username ??
+          user.primaryEmailAddress?.emailAddress.split("@")[0]?.split(".")[0] ??
+          "Unknown",
         email: user.primaryEmailAddress?.emailAddress ?? "",
       });
     }
