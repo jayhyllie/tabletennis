@@ -77,7 +77,7 @@ export function GroupForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isCreating}>
+        <Button type="submit" className="w-full" disabled={true}>
           {isCreating ? "Skapar..." : "Skapa slumpmässiga grupper"}
         </Button>
       </form>

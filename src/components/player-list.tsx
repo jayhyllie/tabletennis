@@ -1,7 +1,5 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -10,32 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
 import { api } from "@/trpc/react";
 
 export function PlayerList() {
   const { data: players, isLoading } = api.player.getAll.useQuery();
-  const { toast } = useToast();
-  const utils = api.useUtils();
-
-  const { mutate: removePlayer, isPending } = api.player.delete.useMutation({
-    onSuccess: async () => {
-      await utils.player.invalidate();
-    },
-    onError: (error) => {
-      console.error("Failed to remove player", error);
-    },
-  });
-
-  const { mutate: deleteAllPlayers } = api.player.deleteAll.useMutation({
-    onSuccess: async () => {
-      await utils.player.invalidate();
-      toast({
-        title: "Success",
-        description: "All players deleted successfully",
-      });
-    },
-  });
 
   if (isLoading) {
     return <div className="py-4 text-center">Loading players...</div>;
@@ -66,27 +42,10 @@ export function PlayerList() {
               <TableCell>
                 {new Date(player.createdAt).toLocaleDateString()}
               </TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removePlayer({ id: player.id })}
-                  aria-label="Remove player"
-                  disabled={isPending}
-                >
-                  <Trash2 className="text-destructive h-4 w-4" />
-                </Button>
-              </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-      <Button
-        onClick={() => deleteAllPlayers()}
-        className="mt-4 w-fit justify-end"
-      >
-        Delete All Players
-      </Button>
     </div>
   );
 }
