@@ -10,11 +10,28 @@ export const playerRouter = createTRPCRouter({
       },
     });
   }),
-  create: publicProcedure
-    .input(z.object({ name: z.string(), email: z.string() }))
+  createFromClerk: publicProcedure
+    .input(
+      z.object({
+        clerkId: z.string(),
+        name: z.string(),
+        email: z.string(),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
+      // Check if player already exists
+      const existingPlayer = await ctx.db.player.findUnique({
+        where: { clerkId: input.clerkId },
+      });
+
+      if (existingPlayer) {
+        return existingPlayer;
+      }
+
+      // Create new player
       return ctx.db.player.create({
         data: {
+          clerkId: input.clerkId,
           name: input.name,
           email: input.email,
         },
@@ -27,4 +44,20 @@ export const playerRouter = createTRPCRouter({
         where: { id: input.id },
       });
     }),
+  deleteAll: publicProcedure.mutation(async ({ ctx }) => {
+    // First, delete all scores
+    await ctx.db.score.deleteMany();
+
+    // Delete all matches
+    await ctx.db.match.deleteMany();
+
+    // Delete all playoff matches
+    await ctx.db.playoffMatch.deleteMany();
+
+    // Delete all player-group relationships
+    await ctx.db.playerGroup.deleteMany();
+
+    // Finally, delete all players
+    return ctx.db.player.deleteMany();
+  }),
 });

@@ -22,27 +22,21 @@ export function PlayerList() {
   const { mutate: removePlayer, isPending } = api.player.delete.useMutation({
     onSuccess: () => {
       utils.player.invalidate();
-      toast({
-        title: "Success",
-        description: "Player removed successfully",
-      });
     },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to remove player",
-        variant: "destructive",
-      });
+    onError: (error) => {
+      console.error("Failed to remove player", error);
     },
   });
 
-  const handleRemovePlayer = async (id: string) => {
-    try {
-      await removePlayer({ id });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  const { mutate: deleteAllPlayers } = api.player.deleteAll.useMutation({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "All players deleted successfully",
+      });
+      utils.player.invalidate();
+    },
+  });
 
   if (isLoading) {
     return <div className="py-4 text-center">Loading players...</div>;
@@ -57,12 +51,11 @@ export function PlayerList() {
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
+    <div className="flex flex-col gap-4">
+      <Table className="rounded-md border">
         <TableHeader>
           <TableRow>
             <TableHead>Namn</TableHead>
-            {/* <TableHead>Email</TableHead> */}
             <TableHead>Registrerad</TableHead>
             <TableHead className="w-[80px]"></TableHead>
           </TableRow>
@@ -78,8 +71,9 @@ export function PlayerList() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => handleRemovePlayer(player.id)}
+                  onClick={() => removePlayer({ id: player.id })}
                   aria-label="Remove player"
+                  disabled={isPending}
                 >
                   <Trash2 className="text-destructive h-4 w-4" />
                 </Button>
@@ -88,6 +82,12 @@ export function PlayerList() {
           ))}
         </TableBody>
       </Table>
+      <Button
+        onClick={() => deleteAllPlayers()}
+        className="mt-4 w-fit justify-end"
+      >
+        Delete All Players
+      </Button>
     </div>
   );
 }

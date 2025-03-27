@@ -21,6 +21,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.12.11",
+    "@clerk/themes": "^2.2.25",
     "@hookform/resolvers": "^4.1.3",
     "@prisma/client": "^5.14.0",
     "@radix-ui/react-dialog": "^1.1.6",
@@ -65,5 +67,8 @@
   },
   "ct3aMetadata": {
     "initVersion": "7.39.0"
-  }
+  },
+  "trustedDependencies": [
+    "@clerk/shared"
+  ]
 }
