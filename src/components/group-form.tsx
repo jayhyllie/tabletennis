@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -47,8 +46,8 @@ export function GroupForm() {
 
   const { mutate: createRandomGroups, isPending: isCreating } =
     api.group.createRandomGroups.useMutation({
-      onSuccess: () => {
-        utils.group.getAll.invalidate();
+      onSuccess: async () => {
+        await utils.group.getAll.invalidate();
         toast({
           title: "Lyckades",
           description: `${form.getValues().numGroups} grupper skapade`,

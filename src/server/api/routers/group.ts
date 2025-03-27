@@ -59,9 +59,6 @@ export const groupRouter = createTRPCRouter({
       // Shuffle players randomly
       const shuffledPlayers = [...players].sort(() => Math.random() - 0.5);
 
-      // Calculate players per group (round up to ensure all players are assigned)
-      const playersPerGroup = Math.ceil(players.length / input.numGroups);
-
       // Assign players to groups
       for (let i = 0; i < shuffledPlayers.length; i++) {
         const groupIndex = i % input.numGroups;

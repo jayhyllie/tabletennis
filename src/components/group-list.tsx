@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -11,7 +10,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Player, Group } from "@prisma/client";
 import { api } from "@/trpc/react";
 
 export function GroupList() {
@@ -25,11 +23,11 @@ export function GroupList() {
 
   const { mutate: generateMatches, isPending: isGeneratingMatches } =
     api.match.generateMatches.useMutation({
-      onSuccess: () => {
-        utils.group.getAll.invalidate();
-        utils.player.getAll.invalidate();
-        utils.playerGroup.getAll.invalidate();
-        utils.match.getAll.invalidate();
+      onSuccess: async () => {
+        await utils.group.getAll.invalidate();
+        await utils.player.getAll.invalidate();
+        await utils.playerGroup.getAll.invalidate();
+        await utils.match.getAll.invalidate();
       },
       onError: (error) => {
         console.error(error);

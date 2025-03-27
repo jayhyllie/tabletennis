@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import type { Match, Player, Group, Score } from "@prisma/client";
+import type { Match } from "@prisma/client";
 import { api } from "@/trpc/react";
 
 export function MatchList() {
@@ -37,9 +37,9 @@ export function MatchList() {
 
   const { mutate: createScore, isPending: isSubmitting } =
     api.score.create.useMutation({
-      onSuccess: () => {
-        utils.score.getAll.invalidate();
-        utils.match.getAll.invalidate();
+      onSuccess: async () => {
+        await utils.score.getAll.invalidate();
+        await utils.match.getAll.invalidate();
         setDialogOpen(false);
       },
       onError: (error) => {
@@ -49,9 +49,9 @@ export function MatchList() {
 
   const { mutate: resetMatches, isPending: isResetting } =
     api.match.resetAllMatches.useMutation({
-      onSuccess: () => {
-        utils.score.getAll.invalidate();
-        utils.match.getAll.invalidate();
+      onSuccess: async () => {
+        await utils.score.getAll.invalidate();
+        await utils.match.getAll.invalidate();
         toast({
           title: "Återställt",
           description: "Alla matcher har återställts",
@@ -129,16 +129,16 @@ export function MatchList() {
             {matches.map((match) => (
               <TableRow key={match.id}>
                 <TableCell>
-                  {playerMap.get(match.player1Id) || "Okänd spelare"}
+                  {playerMap.get(match.player1Id) ?? "Okänd spelare"}
                 </TableCell>
                 <TableCell>
-                  {playerMap.get(match.player2Id) || "Okänd spelare"}
+                  {playerMap.get(match.player2Id) ?? "Okänd spelare"}
                 </TableCell>
                 <TableCell>
                   {match.isPlayoff ? (
                     <Badge variant="secondary">Slutspel</Badge>
                   ) : (
-                    groupMap.get(match.groupId || "") || "Okänd grupp"
+                    (groupMap.get(match.groupId ?? "") ?? "Okänd grupp")
                   )}
                 </TableCell>
                 <TableCell>
@@ -196,7 +196,7 @@ export function MatchList() {
                   min="0"
                   value={player1Score}
                   onChange={(e) =>
-                    setPlayer1Score(Number.parseInt(e.target.value) || 0)
+                    setPlayer1Score(Number.parseInt(e.target.value) ?? 0)
                   }
                 />
               </div>
@@ -210,7 +210,7 @@ export function MatchList() {
                   min="0"
                   value={player2Score}
                   onChange={(e) =>
-                    setPlayer2Score(Number.parseInt(e.target.value) || 0)
+                    setPlayer2Score(Number.parseInt(e.target.value) ?? 0)
                   }
                 />
               </div>
@@ -219,9 +219,9 @@ export function MatchList() {
               className="w-full"
               onClick={() =>
                 createScore({
-                  matchId: selectedMatch?.id || "",
-                  player1Score: player1Score || 0,
-                  player2Score: player2Score || 0,
+                  matchId: selectedMatch?.id ?? "",
+                  player1Score: player1Score ?? 0,
+                  player2Score: player2Score ?? 0,
                 })
               }
               disabled={isSubmitting}

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,8 +19,8 @@ export function PlayerList() {
   const utils = api.useUtils();
 
   const { mutate: removePlayer, isPending } = api.player.delete.useMutation({
-    onSuccess: () => {
-      utils.player.invalidate();
+    onSuccess: async () => {
+      await utils.player.invalidate();
     },
     onError: (error) => {
       console.error("Failed to remove player", error);
@@ -29,12 +28,12 @@ export function PlayerList() {
   });
 
   const { mutate: deleteAllPlayers } = api.player.deleteAll.useMutation({
-    onSuccess: () => {
+    onSuccess: async () => {
+      await utils.player.invalidate();
       toast({
         title: "Success",
         description: "All players deleted successfully",
       });
-      utils.player.invalidate();
     },
   });
 

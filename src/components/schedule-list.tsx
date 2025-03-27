@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -10,8 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import type { Match, Player, Group } from "@prisma/client";
+import type { Match } from "@prisma/client";
 import { api } from "@/trpc/react";
 
 export function ScheduleList() {
@@ -40,10 +38,8 @@ export function ScheduleList() {
   // Add group matches
   matches?.forEach((match) => {
     if (!match.isPlayoff) {
-      const groupId = match.groupId || "unknown";
-      if (!matchesByGroup[groupId]) {
-        matchesByGroup[groupId] = [];
-      }
+      const groupId = match.groupId ?? "unknown";
+      matchesByGroup[groupId] ??= [];
       matchesByGroup[groupId].push(match);
     }
   });
@@ -51,7 +47,7 @@ export function ScheduleList() {
   // Add playoff matches
   const playoffMatches = matches?.filter((match) => match.isPlayoff) ?? [];
   if (playoffMatches.length > 0) {
-    matchesByGroup["playoffs"] = playoffMatches;
+    matchesByGroup.playoffs = playoffMatches;
   }
 
   const playerMap = new Map(players?.map((player) => [player.id, player.name]));
@@ -79,10 +75,10 @@ export function ScheduleList() {
                 {groupMatches.map((match) => (
                   <TableRow key={match.id}>
                     <TableCell>
-                      {playerMap.get(match.player1Id) || "Okänd spelare"}
+                      {playerMap.get(match.player1Id) ?? "Okänd spelare"}
                     </TableCell>
                     <TableCell>
-                      {playerMap.get(match.player2Id) || "Okänd spelare"}
+                      {playerMap.get(match.player2Id) ?? "Okänd spelare"}
                     </TableCell>
                     <TableCell>
                       {match.completed ? (

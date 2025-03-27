@@ -37,12 +37,8 @@ export const playoffMatchRouter = createTRPCRouter({
       return ctx.db.playoffMatch.update({
         where: { matchId: input.matchId },
         data: {
-          scores: {
-            create: {
-              player1Score: input.player1Score,
-              player2Score: input.player2Score,
-            },
-          },
+          score1: input.player1Score ?? null,
+          score2: input.player2Score ?? null,
         },
       });
     }),

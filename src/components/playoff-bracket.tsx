@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import type { Match, Player, Score } from "@prisma/client";
+import type { Match } from "@prisma/client";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 
@@ -20,8 +19,8 @@ export function PlayoffBracket() {
 
   const { mutate: generatePlayoffs, isPending: isGenerating } =
     api.match.generatePlayoffs.useMutation({
-      onSuccess: () => {
-        utils.match.getAll.invalidate();
+      onSuccess: async () => {
+        await utils.match.getAll.invalidate();
         toast({
           title: "Slutspel genererat",
           description: "Slutspelsmatcherna har skapats",
@@ -65,9 +64,7 @@ export function PlayoffBracket() {
   // Group matches by round
   const matchesByRound: Record<number, Match[]> = {};
   playoffMatches.forEach((match) => {
-    if (!matchesByRound[match.round]) {
-      matchesByRound[match.round] = [];
-    }
+    matchesByRound[match.round] ??= [];
     matchesByRound[match.round]!.push(match);
   });
 
@@ -98,7 +95,7 @@ export function PlayoffBracket() {
                       <div className="font-medium">
                         {players?.find(
                           (player) => player.id === match.player1Id,
-                        )?.name || "TBD"}
+                        )?.name ?? "TBD"}
                       </div>
                       <div className="font-bold">
                         {scores?.find((score) => score.matchId === match.id)
@@ -109,7 +106,7 @@ export function PlayoffBracket() {
                       <div className="font-medium">
                         {players?.find(
                           (player) => player.id === match.player2Id,
-                        )?.name || "TBD"}
+                        )?.name ?? "TBD"}
                       </div>
                       <div className="font-bold">
                         {scores?.find((score) => score.matchId === match.id)

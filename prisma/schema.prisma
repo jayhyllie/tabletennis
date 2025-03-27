@@ -84,5 +84,7 @@ model PlayoffMatch {
     player1 Player @relation("player1PlayoffMatches", fields: [player1Id], references: [id])
     player2 Player @relation("player2PlayoffMatches", fields: [player2Id], references: [id])
     group   Group? @relation(fields: [groupId], references: [id])
+    score1  Int?
+    score2  Int?
 }
 

@@ -72,7 +72,7 @@ export function StandingsList() {
         player1Stats.played++;
         player2Stats.played++;
 
-        if (score?.player1Score! > score?.player2Score!) {
+        if (score && score.player1Score > score.player2Score) {
           player1Stats.won++;
           player2Stats.lost++;
           player1Stats.points += 2;

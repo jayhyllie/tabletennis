@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Prisma } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const matchRouter = createTRPCRouter({
@@ -106,11 +106,11 @@ export const matchRouter = createTRPCRouter({
           const score = match.scores[0];
           if (!score) return;
 
-          const player1Stats = playerStats.get(match.player1Id) || {
+          const player1Stats = playerStats.get(match.player1Id) ?? {
             wins: 0,
             points: 0,
           };
-          const player2Stats = playerStats.get(match.player2Id) || {
+          const player2Stats = playerStats.get(match.player2Id) ?? {
             wins: 0,
             points: 0,
           };
