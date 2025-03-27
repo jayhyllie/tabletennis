@@ -15,6 +15,7 @@ import {
   SignUpButton,
   UserButton,
   useUser,
+  RedirectToSignIn,
 } from "@clerk/nextjs";
 import { useEffect } from "react";
 import { api } from "@/trpc/react";
@@ -64,8 +65,7 @@ export default function RootLayout({
                     <Navbar />
                     <div className="flex">
                       <SignedOut>
-                        <SignInButton />
-                        <SignUpButton />
+                        <RedirectToSignIn />
                       </SignedOut>
                       <SignedIn>
                         <UserButton />
