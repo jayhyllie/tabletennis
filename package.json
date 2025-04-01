@@ -72,6 +72,10 @@
     "initVersion": "7.39.0"
   },
   "trustedDependencies": [
-    "@clerk/shared"
+    "@clerk/shared",
+    "@prisma/client",
+    "@prisma/engines",
+    "prisma",
+    "sharp"
   ]
 }

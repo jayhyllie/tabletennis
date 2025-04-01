@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/trpc/react";
+import { Loader2Icon } from "lucide-react";
 
 const formSchema = z.object({
   numGroups: z
@@ -77,8 +78,15 @@ export function GroupForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={true}>
-          {isCreating ? "Skapar..." : "Skapa slumpmässiga grupper"}
+        <Button type="submit" className="w-full" disabled={isCreating}>
+          {isCreating ? (
+            <>
+              <Loader2Icon className="animate-spin" />
+              Skapar...
+            </>
+          ) : (
+            "Skapa slumpmässiga grupper"
+          )}
         </Button>
       </form>
     </Form>

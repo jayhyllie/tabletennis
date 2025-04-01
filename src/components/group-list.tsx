@@ -11,9 +11,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/trpc/react";
+import { Loader2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export function GroupList() {
   const utils = api.useUtils();
+  const router = useRouter();
 
   const { data: groups, isPending } = api.group.getAll.useQuery();
   const { data: players, isPending: isLoadingPlayers } =
@@ -28,6 +31,7 @@ export function GroupList() {
         await utils.player.getAll.invalidate();
         await utils.playerGroup.getAll.invalidate();
         await utils.match.getAll.invalidate();
+        router.push("/matches");
       },
       onError: (error) => {
         console.error(error);
@@ -40,7 +44,7 @@ export function GroupList() {
 
   if (groups?.length === 0) {
     return (
-      <div className="text-muted-foreground py-4 text-center">
+      <div className="py-4 text-center text-muted-foreground">
         Inga grupper skapade än
       </div>
     );
@@ -62,7 +66,14 @@ export function GroupList() {
           onClick={() => generateMatches()}
           disabled={isGeneratingMatches || groups?.length === 0}
         >
-          {isGeneratingMatches ? "Genererar..." : "Generera matcher"}
+          {isGeneratingMatches ? (
+            <>
+              <Loader2Icon className="animate-spin" />
+              Genererar...
+            </>
+          ) : (
+            "Generera matcher"
+          )}
         </Button>
       </div>
 
@@ -93,7 +104,7 @@ export function GroupList() {
                     <TableRow>
                       <TableCell
                         colSpan={2}
-                        className="text-muted-foreground text-center"
+                        className="text-center text-muted-foreground"
                       >
                         Inga spelare i denna grupp
                       </TableCell>

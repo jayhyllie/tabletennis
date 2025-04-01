@@ -11,6 +11,7 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { db } from "@/server/db";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
 /**
  * 1. CONTEXT
@@ -25,8 +26,12 @@ import { db } from "@/server/db";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
+  const { userId } = await auth()
+  const user = await currentUser()
   return {
     db,
+    userId,
+    user: userId ? user : null,
     ...opts,
   };
 };
@@ -104,3 +109,13 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * are logged in.
  */
 export const publicProcedure = t.procedure.use(timingMiddleware);
+
+export const adminProcedure = t.procedure.use(timingMiddleware).use(async ({ ctx, next }) => {
+  const role = ctx.user?.publicMetadata?.role;
+  // Check if user is admin
+  const isAdmin = role === "admin" || role === "superadmin";
+  if (!isAdmin) {
+    throw new Error("Unauthorized");
+  }
+  return next();
+});
