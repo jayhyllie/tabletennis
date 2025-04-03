@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const playerRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
@@ -37,14 +37,14 @@ export const playerRouter = createTRPCRouter({
         },
       });
     }),
-  delete: adminProcedure
+  delete: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return ctx.db.player.delete({
         where: { id: input.id },
       });
     }),
-  deleteAll: adminProcedure.mutation(async ({ ctx }) => {
+  deleteAll: publicProcedure.mutation(async ({ ctx }) => {
     // First, delete all scores
     await ctx.db.score.deleteMany();
 

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const groupRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
@@ -26,15 +26,20 @@ export const groupRouter = createTRPCRouter({
         data: { name: input.name },
       });
     }),
-  remove: adminProcedure
+  remove: publicProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       return ctx.db.group.delete({
         where: { id: input.id },
       });
     }),
-
-  createRandomGroups: adminProcedure
+  removeAll: publicProcedure.mutation(async ({ ctx }) => {
+    await ctx.db.score.deleteMany();
+    await ctx.db.match.deleteMany();
+    await ctx.db.playerGroup.deleteMany();
+    await ctx.db.group.deleteMany();
+  }),
+  createRandomGroups: publicProcedure
     .input(z.object({ numGroups: z.number() }))
     .mutation(async ({ ctx, input }) => {
       // Delete existing records in the correct order to avoid foreign key constraints

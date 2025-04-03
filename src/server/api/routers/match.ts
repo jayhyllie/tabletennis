@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
-import { adminProcedure, createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const matchRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
@@ -23,7 +23,7 @@ export const matchRouter = createTRPCRouter({
         },
       });
     }),
-  generateMatches: adminProcedure.mutation(async ({ ctx }) => {
+  generateMatches: publicProcedure.mutation(async ({ ctx }) => {
     // Get all groups with their players
     const groups = await ctx.db.group.findMany({
       include: {
@@ -61,7 +61,7 @@ export const matchRouter = createTRPCRouter({
     });
   }),
 
-  resetAllMatches: adminProcedure.mutation(async ({ ctx }) => {
+  resetAllMatches: publicProcedure.mutation(async ({ ctx }) => {
     // First delete all scores
     await ctx.db.score.deleteMany();
 
@@ -71,7 +71,7 @@ export const matchRouter = createTRPCRouter({
     });
   }),
 
-  generatePlayoffs: adminProcedure.mutation(async ({ ctx }) => {
+  generatePlayoffs: publicProcedure.mutation(async ({ ctx }) => {
     // Get all groups with their matches
     const groups = await ctx.db.group.findMany({
       include: {
