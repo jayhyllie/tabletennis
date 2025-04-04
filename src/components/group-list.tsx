@@ -13,8 +13,9 @@ import {
 import { api } from "@/trpc/react";
 import { Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import type { UserData } from "./group-client";
 
-export function GroupList() {
+export function GroupList({ user }: { user: UserData | null }) {
   const utils = api.useUtils();
   const router = useRouter();
 
@@ -61,21 +62,23 @@ export function GroupList() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button
-          onClick={() => generateMatches()}
-          disabled={isGeneratingMatches || groups?.length === 0}
-        >
-          {isGeneratingMatches ? (
-            <>
-              <Loader2Icon className="animate-spin" />
-              Genererar...
-            </>
-          ) : (
-            "Generera matcher"
-          )}
-        </Button>
-      </div>
+      {user?.role === "admin" && (
+        <div className="flex justify-end">
+          <Button
+            onClick={() => generateMatches()}
+            disabled={isGeneratingMatches || groups?.length === 0}
+          >
+            {isGeneratingMatches ? (
+              <>
+                <Loader2Icon className="animate-spin" />
+                Genererar...
+              </>
+            ) : (
+              "Generera matcher"
+            )}
+          </Button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {matchingGroupPlayers?.map((group) => (

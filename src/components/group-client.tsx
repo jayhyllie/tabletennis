@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-type UserData = {
+export type UserData = {
   id: string;
   role: string;
 };
@@ -33,7 +33,7 @@ export function GroupsClient({ user }: { user: UserData | null }) {
           <CardDescription>Se och hantera grupper</CardDescription>
         </CardHeader>
         <CardContent>
-          <GroupList />
+          <GroupList user={user} />
         </CardContent>
       </Card>
 
