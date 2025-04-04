@@ -1,10 +1,25 @@
-import { MatchList } from "@/components/match-list"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { MatchList } from "@/components/match-list";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { currentUser } from "@clerk/nextjs/server";
 
-export default function MatchesPage() {
+export default async function MatchesPage() {
+  const user = await currentUser();
+
+  const userData = user
+    ? {
+        id: user.id,
+        role: user.publicMetadata.role as string,
+      }
+    : null;
   return (
-    <div className="container py-10 mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Matcher</h1>
+    <div className="container mx-auto py-10">
+      <h1 className="mb-6 text-3xl font-bold">Matcher</h1>
 
       <Card>
         <CardHeader>
@@ -12,9 +27,9 @@ export default function MatchesPage() {
           <CardDescription>Ange resultat för färdiga matcher</CardDescription>
         </CardHeader>
         <CardContent>
-          <MatchList />
+          <MatchList user={userData} />
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

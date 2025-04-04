@@ -22,8 +22,9 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import type { Match } from "@prisma/client";
 import { api } from "@/trpc/react";
+import type { UserData } from "./group-client";
 
-export function MatchList() {
+export function MatchList({ user }: { user: UserData | null }) {
   const utils = api.useUtils();
 
   const { data: matches, isPending: isLoadingMatches } =
@@ -105,7 +106,7 @@ export function MatchList() {
 
   if (!matches?.length) {
     return (
-      <div className="text-muted-foreground py-4 text-center">
+      <div className="py-4 text-center text-muted-foreground">
         Inga matcher schemalagda än
       </div>
     );
@@ -169,15 +170,17 @@ export function MatchList() {
           </TableBody>
         </Table>
       </div>
-      <div className="mt-4 flex justify-end">
-        <Button
-          variant="destructive"
-          onClick={() => resetMatches()}
-          disabled={isResetting}
-        >
-          {isResetting ? "Återställer..." : "Återställ alla matcher"}
-        </Button>
-      </div>
+      {user?.role === "admin" && (
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="destructive"
+            onClick={() => resetMatches()}
+            disabled={isResetting}
+          >
+            {isResetting ? "Återställer..." : "Återställ alla matcher"}
+          </Button>
+        </div>
+      )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
