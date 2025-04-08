@@ -62,7 +62,7 @@ export function GroupList({ user }: { user: UserData | null }) {
 
   return (
     <div className="space-y-6">
-      {user?.role === "admin" && (
+      {/* {user?.role === "admin" && (
         <div className="flex justify-end">
           <Button
             onClick={() => generateMatches()}
@@ -78,7 +78,7 @@ export function GroupList({ user }: { user: UserData | null }) {
             )}
           </Button>
         </div>
-      )}
+      )} */}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {matchingGroupPlayers?.map((group) => (
