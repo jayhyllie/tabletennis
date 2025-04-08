@@ -197,14 +197,14 @@ export function MatchList({ user }: { user: UserData | null }) {
       </div>
       {user?.role === "admin" && (
         <div className="mt-4 flex justify-end gap-2">
-          <Button
+          {/* <Button
             variant="secondary"
             onClick={() => deleteDuplicates()}
             disabled={isDeletingDuplicates}
             className="text-white"
           >
             {isDeletingDuplicates ? "Raderar..." : "Radera dubbla matcher"}
-          </Button>
+          </Button> */}
           <Button
             variant="destructive"
             onClick={() => resetMatches()}

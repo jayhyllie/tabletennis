@@ -41,6 +41,27 @@ export function StandingsList() {
     );
   }
 
+  // Add this function to sort players consistently
+  const comparePlayerStandings = (a: PlayerStanding, b: PlayerStanding) => {
+    // First compare points
+    if (b.points !== a.points) {
+      return b.points - a.points;
+    }
+
+    // If points are equal, compare score difference
+    const aScoreDiff = a.totalScoreFor - a.totalScoreAgainst;
+    const bScoreDiff = b.totalScoreFor - b.totalScoreAgainst;
+    if (bScoreDiff !== aScoreDiff) {
+      return bScoreDiff - aScoreDiff;
+    }
+
+    // If score difference is equal, compare total scores for
+    return b.totalScoreFor - a.totalScoreFor;
+  };
+
+  // After calculating standings for all groups, collect all third places
+  const thirdPlaceStandings: PlayerStanding[] = [];
+
   // Calculate standings for each group
   const standings: Record<string, PlayerStanding[]> = {};
 
@@ -94,11 +115,26 @@ export function StandingsList() {
       }
     });
 
-    // Sort players by points
+    // Sort players using the comparison function
     standings[group.id] = Array.from(playerStats.values()).sort(
-      (a, b) => b.points - a.points,
+      comparePlayerStandings,
     );
+    // Add third place player to our collection if the group has at least 3 players
+    if (standings[group.id]!.length >= 3) {
+      const thirdPlace = standings[group.id]![2];
+      if (thirdPlace) {
+        thirdPlaceStandings.push(thirdPlace);
+      }
+    }
   }
+
+  // Sort third place players and get top 4 IDs
+  const bestThirdPlaceIds = new Set(
+    thirdPlaceStandings
+      .sort(comparePlayerStandings)
+      .slice(0, 4)
+      .map((player) => player.player.id),
+  );
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -115,7 +151,7 @@ export function StandingsList() {
                   <TableHead className="text-center">Spelade</TableHead>
                   <TableHead className="text-center">Vinst</TableHead>
                   <TableHead className="text-center">Förlust</TableHead>
-                  <TableHead className="text-center">V/F</TableHead>
+                  <TableHead className="text-center">+/-</TableHead>
                   <TableHead className="text-center font-bold text-black">
                     Poäng
                   </TableHead>
@@ -130,7 +166,10 @@ export function StandingsList() {
                         ? "bg-green-100 dark:bg-green-900/20"
                         : index === 1
                           ? "bg-blue-100 dark:bg-blue-900/20"
-                          : ""
+                          : index === 2 &&
+                              bestThirdPlaceIds.has(standing.player.id)
+                            ? "bg-yellow-100 dark:bg-yellow-900/20"
+                            : ""
                     }
                   >
                     <TableCell className="font-medium">
