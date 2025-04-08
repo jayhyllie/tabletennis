@@ -21,6 +21,8 @@ type PlayerStanding = {
   won: number;
   lost: number;
   points: number;
+  totalScoreFor: number;
+  totalScoreAgainst: number;
 };
 
 export function StandingsList() {
@@ -33,7 +35,7 @@ export function StandingsList() {
 
   if (!groups?.length) {
     return (
-      <div className="text-muted-foreground py-4 text-center">
+      <div className="py-4 text-center text-muted-foreground">
         Inga grupper skapade än
       </div>
     );
@@ -53,6 +55,8 @@ export function StandingsList() {
         won: 0,
         lost: 0,
         points: 0,
+        totalScoreFor: 0,
+        totalScoreAgainst: 0,
       });
     });
 
@@ -68,9 +72,15 @@ export function StandingsList() {
       const player1Stats = playerStats.get(player1Id);
       const player2Stats = playerStats.get(player2Id);
 
-      if (player1Stats && player2Stats) {
+      if (player1Stats && player2Stats && score) {
         player1Stats.played++;
         player2Stats.played++;
+
+        player1Stats.totalScoreFor += score.player1Score;
+        player2Stats.totalScoreFor += score.player2Score;
+
+        player1Stats.totalScoreAgainst += score.player2Score;
+        player2Stats.totalScoreAgainst += score.player1Score;
 
         if (score && score.player1Score > score.player2Score) {
           player1Stats.won++;
@@ -105,7 +115,10 @@ export function StandingsList() {
                   <TableHead className="text-center">Spelade</TableHead>
                   <TableHead className="text-center">Vinst</TableHead>
                   <TableHead className="text-center">Förlust</TableHead>
-                  <TableHead className="text-center">Poäng</TableHead>
+                  <TableHead className="text-center">V/F</TableHead>
+                  <TableHead className="text-center font-bold text-black">
+                    Poäng
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -133,6 +146,9 @@ export function StandingsList() {
                       {standing.lost}
                     </TableCell>
                     <TableCell className="text-center font-bold">
+                      {standing.totalScoreFor}-{standing.totalScoreAgainst}
+                    </TableCell>
+                    <TableCell className="text-center font-bold">
                       {standing.points}
                     </TableCell>
                   </TableRow>
@@ -141,7 +157,7 @@ export function StandingsList() {
                   <TableRow>
                     <TableCell
                       colSpan={5}
-                      className="text-muted-foreground text-center"
+                      className="text-center text-muted-foreground"
                     >
                       Inga resultat tillgängliga
                     </TableCell>
