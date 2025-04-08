@@ -158,4 +158,52 @@ export const matchRouter = createTRPCRouter({
       data: playoffMatches as Prisma.MatchCreateManyInput[],
     });
   }),
+
+  deleteDuplicateMatches: publicProcedure.mutation(async ({ ctx }) => {
+    // First, get all matches
+    const matches = await ctx.db.match.findMany({
+      include: {
+        scores: true, // Include scores to check if match has been played
+      },
+    });
+
+    // Keep track of seen matches and matches to delete
+    const seen = new Set<string>();
+    const duplicateIds: string[] = [];
+
+    // Sort matches so completed ones are processed first (this ensures we keep completed matches)
+    const sortedMatches = [...matches].sort((a, b) => {
+      if (a.completed && !b.completed) return -1;
+      if (!a.completed && b.completed) return 1;
+      return 0;
+    });
+
+    sortedMatches.forEach((match) => {
+      // Create a unique key for each match combination
+      const matchKey = `${match.player1Id}-${match.player2Id}-${match.round}-${match.groupId}`;
+
+      if (seen.has(matchKey)) {
+        // This is a duplicate - only add to delete list if it's not completed
+        if (!match.completed && match.scores.length === 0) {
+          duplicateIds.push(match.id);
+        }
+      } else {
+        // First time seeing this match combination
+        seen.add(matchKey);
+      }
+    });
+
+    // Delete all duplicates
+    if (duplicateIds.length > 0) {
+      await ctx.db.match.deleteMany({
+        where: {
+          id: {
+            in: duplicateIds,
+          },
+        },
+      });
+    }
+
+    return { deletedCount: duplicateIds.length };
+  }),
 });

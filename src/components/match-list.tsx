@@ -68,6 +68,25 @@ export function MatchList({ user }: { user: UserData | null }) {
       },
     });
 
+  const { mutate: deleteDuplicates, isPending: isDeletingDuplicates } =
+    api.match.deleteDuplicateMatches.useMutation({
+      onSuccess: async (result) => {
+        await utils.match.getAll.invalidate();
+        toast({
+          title: "Klart!",
+          description: `Raderade ${result.deletedCount} dubbla matcher`,
+        });
+      },
+      onError: (error) => {
+        console.error(error);
+        toast({
+          variant: "destructive",
+          title: "Fel",
+          description: "Kunde inte radera dubbla matcher",
+        });
+      },
+    });
+
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [player1Score, setPlayer1Score] = useState<number>(0);
   const [player2Score, setPlayer2Score] = useState<number>(0);
@@ -112,6 +131,12 @@ export function MatchList({ user }: { user: UserData | null }) {
     );
   }
 
+  const sortedMatches = matches.sort((a, b) => {
+    if (a.completed && !b.completed) return -1;
+    if (!a.completed && b.completed) return 1;
+    return 0;
+  });
+
   return (
     <div>
       <div className="rounded-md border">
@@ -127,7 +152,7 @@ export function MatchList({ user }: { user: UserData | null }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {matches.map((match) => (
+            {sortedMatches.map((match) => (
               <TableRow key={match.id}>
                 <TableCell>
                   {playerMap.get(match.player1Id) ?? "Okänd spelare"}
@@ -171,7 +196,15 @@ export function MatchList({ user }: { user: UserData | null }) {
         </Table>
       </div>
       {user?.role === "admin" && (
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-end gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => deleteDuplicates()}
+            disabled={isDeletingDuplicates}
+            className="text-white"
+          >
+            {isDeletingDuplicates ? "Raderar..." : "Radera dubbla matcher"}
+          </Button>
           <Button
             variant="destructive"
             onClick={() => resetMatches()}
