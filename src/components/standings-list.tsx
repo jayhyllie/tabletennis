@@ -145,7 +145,7 @@ export function StandingsList() {
                     <TableCell className="text-center">
                       {standing.lost}
                     </TableCell>
-                    <TableCell className="text-center font-bold">
+                    <TableCell className="text-center">
                       {standing.totalScoreFor}-{standing.totalScoreAgainst}
                     </TableCell>
                     <TableCell className="text-center font-bold">
