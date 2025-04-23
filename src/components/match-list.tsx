@@ -162,7 +162,9 @@ export function MatchList({ user }: { user: UserData | null }) {
                 </TableCell>
                 <TableCell>
                   {match.isPlayoff ? (
-                    <Badge variant="secondary">Slutspel</Badge>
+                    <Badge variant="secondary" className="text-white">
+                      Slutspel
+                    </Badge>
                   ) : (
                     (groupMap.get(match.groupId ?? "") ?? "Okänd grupp")
                   )}
