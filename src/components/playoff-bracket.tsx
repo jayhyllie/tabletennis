@@ -44,7 +44,7 @@ export function PlayoffBracket() {
       },
     });
 
-  const { mutate: deletePlayoffMatches, isPending: isDeleting } =
+  /* const { mutate: deletePlayoffMatches, isPending: isDeleting } =
     api.match.deletePlayoffMatches.useMutation({
       onSuccess: async () => {
         await utils.match.getAll.invalidate();
@@ -60,7 +60,7 @@ export function PlayoffBracket() {
           description: error.message,
         });
       },
-    });
+    }); */
 
   const { mutate: createNextRoundMatches, isPending: isCreatingNextRound } =
     api.match.createEmptyPlayoffMatchesForRound.useMutation({
@@ -328,6 +328,7 @@ export function PlayoffBracket() {
             }
             disabled={isCreatingNextRound}
             variant="secondary"
+            className="text-white"
           >
             {isCreatingNextRound
               ? "Genererar..."

@@ -90,8 +90,8 @@ export function StandingsList() {
       const player1Id = match.player1Id;
       const player2Id = match.player2Id;
 
-      const player1Stats = playerStats.get(player1Id);
-      const player2Stats = playerStats.get(player2Id);
+      const player1Stats = playerStats.get(player1Id ?? "");
+      const player2Stats = playerStats.get(player2Id ?? "");
 
       if (player1Stats && player2Stats && score) {
         player1Stats.played++;

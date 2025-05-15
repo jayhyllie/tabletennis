@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -11,33 +10,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { api } from "@/trpc/react";
-import { Loader2Icon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import type { UserData } from "./group-client";
 
-export function GroupList({ user }: { user: UserData | null }) {
-  const utils = api.useUtils();
-  const router = useRouter();
-
+export function GroupList() {
   const { data: groups, isPending } = api.group.getAll.useQuery();
   const { data: players, isPending: isLoadingPlayers } =
     api.player.getAll.useQuery();
   const { data: playerGroups, isPending: isLoadingPlayerGroups } =
     api.playerGroup.getAll.useQuery();
-
-  const { mutate: generateMatches, isPending: isGeneratingMatches } =
-    api.match.generateMatches.useMutation({
-      onSuccess: async () => {
-        await utils.group.getAll.invalidate();
-        await utils.player.getAll.invalidate();
-        await utils.playerGroup.getAll.invalidate();
-        await utils.match.getAll.invalidate();
-        router.push("/matches");
-      },
-      onError: (error) => {
-        console.error(error);
-      },
-    });
 
   if (isPending || isLoadingPlayers || isLoadingPlayerGroups) {
     return <div className="py-4 text-center">Laddar grupper...</div>;
@@ -62,24 +41,6 @@ export function GroupList({ user }: { user: UserData | null }) {
 
   return (
     <div className="space-y-6">
-      {/* {user?.role === "admin" && (
-        <div className="flex justify-end">
-          <Button
-            onClick={() => generateMatches()}
-            disabled={isGeneratingMatches || groups?.length === 0}
-          >
-            {isGeneratingMatches ? (
-              <>
-                <Loader2Icon className="animate-spin" />
-                Genererar...
-              </>
-            ) : (
-              "Generera matcher"
-            )}
-          </Button>
-        </div>
-      )} */}
-
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {matchingGroupPlayers?.map((group) => (
           <Card key={group.groupId}>

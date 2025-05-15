@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { Prisma, Match } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 // Define the final round number. Adjust if your playoff structure has a different number of rounds.

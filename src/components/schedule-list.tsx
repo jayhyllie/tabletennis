@@ -75,10 +75,10 @@ export function ScheduleList() {
                 {groupMatches.map((match) => (
                   <TableRow key={match.id}>
                     <TableCell>
-                      {playerMap.get(match.player1Id) ?? "Okänd spelare"}
+                      {playerMap.get(match.player1Id ?? "") ?? "Okänd spelare"}
                     </TableCell>
                     <TableCell>
-                      {playerMap.get(match.player2Id) ?? "Okänd spelare"}
+                      {playerMap.get(match.player2Id ?? "") ?? "Okänd spelare"}
                     </TableCell>
                     <TableCell>
                       {match.completed ? (

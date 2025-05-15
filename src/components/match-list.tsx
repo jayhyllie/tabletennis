@@ -68,31 +68,11 @@ export function MatchList({ user }: { user: UserData | null }) {
       },
     });
 
-  const { mutate: deleteDuplicates, isPending: isDeletingDuplicates } =
-    api.match.deleteDuplicateMatches.useMutation({
-      onSuccess: async (result) => {
-        await utils.match.getAll.invalidate();
-        toast({
-          title: "Klart!",
-          description: `Raderade ${result.deletedCount} dubbla matcher`,
-        });
-      },
-      onError: (error) => {
-        console.error(error);
-        toast({
-          variant: "destructive",
-          title: "Fel",
-          description: "Kunde inte radera dubbla matcher",
-        });
-      },
-    });
-
-  const { mutate: advanceWinner, isPending: isAdvancing } =
-    api.match.advanceWinner.useMutation({
-      onSuccess: async () => {
-        await utils.match.getAll.invalidate();
-      },
-    });
+  const { mutate: advanceWinner } = api.match.advanceWinner.useMutation({
+    onSuccess: async () => {
+      await utils.match.getAll.invalidate();
+    },
+  });
 
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [player1Score, setPlayer1Score] = useState<number>(0);
