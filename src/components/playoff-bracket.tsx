@@ -319,26 +319,22 @@ export function PlayoffBracket() {
 
       <div className="mt-10 flex flex-wrap justify-center gap-4 md:justify-start">
         {nextRoundToGenerateDetails &&
-        nextRoundToGenerateDetails.roundNumber > 1 ? (
-          <Button
-            onClick={() =>
-              createNextRoundMatches({
-                roundNumber: nextRoundToGenerateDetails.roundNumber,
-              })
-            }
-            disabled={isCreatingNextRound}
-            variant="secondary"
-            className="text-white"
-          >
-            {isCreatingNextRound
-              ? "Genererar..."
-              : `Generera matcher för ${nextRoundToGenerateDetails.name}`}
-          </Button>
-        ) : (
-          <Button onClick={() => generatePlayoffs()} disabled={isGenerating}>
-            {isGenerating ? "Genererar..." : "Generera slutspel"}
-          </Button>
-        )}
+          nextRoundToGenerateDetails.roundNumber > 1 && (
+            <Button
+              onClick={() =>
+                createNextRoundMatches({
+                  roundNumber: nextRoundToGenerateDetails.roundNumber,
+                })
+              }
+              disabled={isCreatingNextRound}
+              variant="secondary"
+              className="text-white"
+            >
+              {isCreatingNextRound
+                ? "Genererar..."
+                : `Generera matcher för ${nextRoundToGenerateDetails.name}`}
+            </Button>
+          )}
         {/* {playoffMatches.length > 0 && (
           <Button
             onClick={() => deletePlayoffMatches()}
