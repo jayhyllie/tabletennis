@@ -33,7 +33,7 @@ export function GroupsClient({ user }: { user: UserData | null }) {
           <CardDescription>Se och hantera grupper</CardDescription>
         </CardHeader>
         <CardContent>
-          <GroupList user={user} />
+          <GroupList />
         </CardContent>
       </Card>
 
