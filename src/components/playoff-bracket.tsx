@@ -323,7 +323,7 @@ export function PlayoffBracket() {
           <Button
             onClick={() =>
               createNextRoundMatches({
-                roundNumber: nextRoundToGenerateDetails!.roundNumber,
+                roundNumber: nextRoundToGenerateDetails.roundNumber,
               })
             }
             disabled={isCreatingNextRound}
