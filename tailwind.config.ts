@@ -7,7 +7,11 @@ export default {
       center: true,
       padding: "2rem",
       screens: {
-        "2xl": "1400px",
+        sm: "640px",
+        md: "768px",
+        lg: "1284px",
+        xl: "1880px",
+        tv: "1920px",
       },
     },
     extend: {

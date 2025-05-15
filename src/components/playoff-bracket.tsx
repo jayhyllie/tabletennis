@@ -6,7 +6,7 @@ import type { Match, Player, Score } from "@prisma/client";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
+import useMediaQuery from "@/hooks/use-media-query";
 const FINAL_BRACKET_ROUND_NUMBER = 4;
 const PLAYOFF_ROUND_NAMES: Record<number, string> = {
   1: "Åttondelsfinal",
@@ -18,6 +18,8 @@ const PLAYOFF_ROUND_NAMES: Record<number, string> = {
 export function PlayoffBracket() {
   const utils = api.useUtils();
   const { toast } = useToast();
+
+  const isDesktop = useMediaQuery("(min-width: 1200px)");
 
   const { data: matches, isPending: isLoadingMatches } =
     api.match.getAll.useQuery();
@@ -43,24 +45,6 @@ export function PlayoffBracket() {
         });
       },
     });
-
-  /* const { mutate: deletePlayoffMatches, isPending: isDeleting } =
-    api.match.deletePlayoffMatches.useMutation({
-      onSuccess: async () => {
-        await utils.match.getAll.invalidate();
-        toast({
-          title: "Slutspel raderat",
-          description: "Alla slutspelsmatcher har raderats.",
-        });
-      },
-      onError: (error) => {
-        toast({
-          variant: "destructive",
-          title: "Fel vid radering",
-          description: error.message,
-        });
-      },
-    }); */
 
   const { mutate: createNextRoundMatches, isPending: isCreatingNextRound } =
     api.match.createEmptyPlayoffMatchesForRound.useMutation({
@@ -166,12 +150,6 @@ export function PlayoffBracket() {
     matches.length > 0 &&
     !nextRoundToGenerateDetails
   ) {
-    // This original block was for the main "Generera slutspel" (generatePlayoffs) button
-    // It might still be relevant if `generatePlayoffs` is for seeding the very first players
-    // from group stages into Round 1, and `createEmptyPlayoffMatchesForRound` is for empty structures.
-    // For simplicity, let's assume `generatePlayoffs` button would call your existing
-    // `api.match.generatePlayoffs` which should ideally set up Round 1 with players and `matchOrderInRound`.
-    // The new button below is for subsequent empty rounds.
     return (
       <div className="space-y-4">
         <div className="py-4 text-center text-muted-foreground">
@@ -179,38 +157,177 @@ export function PlayoffBracket() {
         </div>
         <div className="flex justify-center">
           <Button onClick={() => generatePlayoffs()} disabled={isGenerating}>
-            {isGenerating
-              ? "Genererar..."
-              : "Generera slutspel (Starta Åttondelsfinal)"}
+            {isGenerating ? "Genererar..." : "Generera slutspel"}
           </Button>
         </div>
       </div>
     );
   }
 
+  const getPlayerName = (playerId: string | null | undefined) => {
+    if (!playerId) return "";
+    return players?.find((p) => p.id === playerId)?.name ?? "Okänd";
+  };
+
+  const getPlayerScore = (
+    matchId: string | undefined,
+    playerType: "player1" | "player2",
+  ) => {
+    if (!matchId) return "";
+    const score = scores?.find((s) => s.matchId === matchId);
+    if (!score) return "";
+    return playerType === "player1" ? score.player1Score : score.player2Score;
+  };
+
+  // Common buttons logic
+  const actionButtons = (
+    <div className="mt-10 flex flex-wrap justify-center gap-4 px-4 md:justify-start">
+      {nextRoundToGenerateDetails &&
+      nextRoundToGenerateDetails.roundNumber > 1 ? (
+        <Button
+          onClick={() =>
+            createNextRoundMatches({
+              roundNumber: nextRoundToGenerateDetails.roundNumber,
+            })
+          }
+          disabled={isCreatingNextRound}
+          variant="secondary"
+          className="text-white"
+        >
+          {isCreatingNextRound
+            ? "Genererar..."
+            : `Generera matcher för ${nextRoundToGenerateDetails.name}`}
+        </Button>
+      ) : (
+        !nextRoundToGenerateDetails && // Only show "Generera Slutspel" if no next round is pending
+        playoffMatches.length === 0 && ( // And no playoff matches exist yet
+          <Button onClick={() => generatePlayoffs()} disabled={isGenerating}>
+            {isGenerating ? "Genererar..." : "Generera slutspel"}
+          </Button>
+        )
+      )}
+    </div>
+  );
+
+  if (!isDesktop) {
+    // Mobile/Tablet List View
+    return (
+      <div className="px-2 py-6">
+        <div className="mb-8 text-center">
+          <h2 className="text-4xl font-bold text-primary">SLUTSPEL</h2>
+        </div>
+        {roundsInfo.map((round) => {
+          const currentRoundMatches = matchesByRound[round.round] ?? [];
+          if (
+            currentRoundMatches.length === 0 &&
+            round.round > 1 &&
+            !(matchesByRound[round.round - 1] ?? []).every((m) => m.completed)
+          ) {
+            // Don't show empty future rounds if previous round is not completed
+            return null;
+          }
+          if (
+            currentRoundMatches.length === 0 &&
+            !nextRoundToGenerateDetails &&
+            round.round === 1 &&
+            playoffMatches.length > 0
+          ) {
+            // If round 1 has no matches but other playoff matches exist (e.g. higher rounds somehow), don't show empty round 1
+            return null;
+          }
+          if (
+            currentRoundMatches.length === 0 &&
+            round.round >
+              (nextRoundToGenerateDetails?.roundNumber ??
+                FINAL_BRACKET_ROUND_NUMBER)
+          ) {
+            return null; // Don't show rounds that are beyond what's generated or to be generated
+          }
+
+          return (
+            <div key={round.round} className="mb-8">
+              <h3 className="mb-4 text-center text-2xl font-semibold">
+                {PLAYOFF_ROUND_NAMES[round.round] ?? `Omgång ${round.round}`}
+              </h3>
+              {currentRoundMatches.length > 0 ? (
+                <div className="space-y-3">
+                  {currentRoundMatches.map((match) => (
+                    <Card
+                      key={match.id}
+                      className="border-primary/80 shadow-lg"
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">
+                            {getPlayerName(match.player1Id)}
+                          </span>
+                          <span className="font-bold">
+                            {match.completed
+                              ? getPlayerScore(match.id, "player1")
+                              : "-"}
+                          </span>
+                        </div>
+                        <div className="my-1 text-center text-sm text-muted-foreground">
+                          vs
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">
+                            {getPlayerName(match.player2Id)}
+                          </span>
+                          <span className="font-bold">
+                            {match.completed
+                              ? getPlayerScore(match.id, "player2")
+                              : "-"}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-4 text-center text-muted-foreground">
+                  {(nextRoundToGenerateDetails &&
+                    nextRoundToGenerateDetails.roundNumber === round.round) ||
+                  (playoffMatches.length === 0 && round.round === 1)
+                    ? `Väntar på att ${PLAYOFF_ROUND_NAMES[round.round] ?? `Omgång ${round.round}`} ska genereras...`
+                    : `Inga matcher för ${PLAYOFF_ROUND_NAMES[round.round] ?? `Omgång ${round.round}`}.`}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {actionButtons}
+      </div>
+    );
+  }
+
+  // Desktop Bracket View (existing code)
   return (
     <div className="py-10">
-      <div className="relative mx-auto min-w-[1400px] px-8 py-12">
+      <div className="tv:px-8 relative mx-auto min-w-[1400px] px-2 py-12">
         {/* Title */}
         <div className="absolute left-1/2 top-0 -translate-x-1/2 text-center">
-          <h2 className="text-[100px] font-bold text-primary">SLUTSPEL</h2>
+          <h2 className="tv:text-[100px] font-bold text-primary sm:text-[50px]">
+            SLUTSPEL
+          </h2>
         </div>
 
         <div className="mx-auto grid w-fit grid-cols-8 grid-rows-8 justify-between gap-16">
           {/* Left side of bracket */}
-          <div className="col-span-3 row-span-8 flex h-full w-fit items-center gap-32">
+          <div className="tv:gap-32 col-span-3 row-span-8 flex h-full w-fit items-center gap-12">
             <div className="flex-1 space-y-4">
-              <div className="space-y-32">
+              <h4 className="text-center text-2xl font-bold">Åttondelsfinal</h4>
+              <div className="tv:space-y-32 space-y-16">
                 {Array.from({ length: 4 }).map((_, index) => {
                   const match = matchesByRound[1]?.[index];
                   return (
                     <MatchPair
                       key={match?.id ?? index}
                       match={match}
-                      players={players}
-                      scores={scores}
                       showConnector={true}
                       connectorType="right"
+                      getPlayerName={getPlayerName}
+                      getPlayerScore={getPlayerScore}
                     />
                   );
                 })}
@@ -218,18 +335,19 @@ export function PlayoffBracket() {
             </div>
 
             <div className="flex-1 space-y-4">
-              <div className="space-y-96">
+              <h4 className="text-center text-2xl font-bold">Kvartsfinal</h4>
+              <div className="tv:space-y-96 space-y-64">
                 {Array.from({ length: 2 }).map((_, index) => {
                   const match = matchesByRound[2]?.[index];
                   return (
                     <MatchPair
                       key={match?.id ?? index}
                       match={match}
-                      players={players}
-                      scores={scores}
                       showConnector={true}
                       connectorType="right"
                       className=""
+                      getPlayerName={getPlayerName}
+                      getPlayerScore={getPlayerScore}
                     />
                   );
                 })}
@@ -237,13 +355,14 @@ export function PlayoffBracket() {
             </div>
 
             <div className="flex-1 space-y-4">
+              <h4 className="text-center text-2xl font-bold">Semifinal</h4>
               <div className="pt-4">
                 <MatchPair
                   match={matchesByRound[3]?.[0]}
-                  players={players}
-                  scores={scores}
                   showConnector={true}
                   connectorType="right"
+                  getPlayerName={getPlayerName}
+                  getPlayerScore={getPlayerScore}
                 />
               </div>
             </div>
@@ -254,60 +373,63 @@ export function PlayoffBracket() {
             <div className="mx-auto w-full pt-4">
               <MatchPair
                 match={matchesByRound[4]?.[0]}
-                players={players}
-                scores={scores}
                 showConnector={false}
                 connectorType={undefined}
                 className="mx-auto w-[calc(100%-4rem)]"
                 isFinal={true}
+                getPlayerName={getPlayerName}
+                getPlayerScore={getPlayerScore}
               />
             </div>
           </div>
 
           {/* Right side of bracket */}
-          <div className="col-span-3 row-span-8 flex items-center gap-32">
+          <div className="tv:gap-32 col-span-3 row-span-8 flex h-full w-fit items-center gap-12">
             <div className="flex-1 space-y-4">
+              <h4 className="text-center text-2xl font-bold">Semifinal</h4>
               <div className="pt-4">
                 <MatchPair
                   match={matchesByRound[3]?.[1]}
-                  players={players}
-                  scores={scores}
                   showConnector={true}
                   connectorType="left"
+                  getPlayerName={getPlayerName}
+                  getPlayerScore={getPlayerScore}
                 />
               </div>
             </div>
 
-            <div className="col-span-1 row-span-8 space-y-4">
-              <div className="space-y-96">
+            <div className="flex-1 space-y-4">
+              <h4 className="text-center text-2xl font-bold">Kvartsfinal</h4>
+              <div className="tv:space-y-96 space-y-64">
                 {Array.from({ length: 2 }).map((_, index) => {
                   const match = matchesByRound[2]?.[index + 2];
                   return (
                     <MatchPair
                       key={match?.id ?? index}
                       match={match}
-                      players={players}
-                      scores={scores}
                       showConnector={true}
                       connectorType="left"
+                      getPlayerName={getPlayerName}
+                      getPlayerScore={getPlayerScore}
                     />
                   );
                 })}
               </div>
             </div>
 
-            <div className="col-span-1 row-span-8 space-y-4">
-              <div className="space-y-32">
+            <div className="flex-1 space-y-4">
+              <h4 className="text-center text-2xl font-bold">Åttondelsfinal</h4>
+              <div className="tv:space-y-32 space-y-16">
                 {Array.from({ length: 4 }).map((_, index) => {
                   const match = matchesByRound[1]?.[index + 4];
                   return (
                     <MatchPair
                       key={match?.id ?? index}
                       match={match}
-                      players={players}
-                      scores={scores}
                       showConnector={true}
                       connectorType="left"
+                      getPlayerName={getPlayerName}
+                      getPlayerScore={getPlayerScore}
                     />
                   );
                 })}
@@ -316,35 +438,7 @@ export function PlayoffBracket() {
           </div>
         </div>
       </div>
-
-      <div className="mt-10 flex flex-wrap justify-center gap-4 md:justify-start">
-        {nextRoundToGenerateDetails &&
-          nextRoundToGenerateDetails.roundNumber > 1 && (
-            <Button
-              onClick={() =>
-                createNextRoundMatches({
-                  roundNumber: nextRoundToGenerateDetails.roundNumber,
-                })
-              }
-              disabled={isCreatingNextRound}
-              variant="secondary"
-              className="text-white"
-            >
-              {isCreatingNextRound
-                ? "Genererar..."
-                : `Generera matcher för ${nextRoundToGenerateDetails.name}`}
-            </Button>
-          )}
-        {/* {playoffMatches.length > 0 && (
-          <Button
-            onClick={() => deletePlayoffMatches()}
-            disabled={isDeleting}
-            variant="destructive"
-          >
-            {isDeleting ? "Raderar..." : "Radera hela slutspelsträdet"}
-          </Button>
-        )} */}
-      </div>
+      {actionButtons}
     </div>
   );
 }
@@ -352,43 +446,33 @@ export function PlayoffBracket() {
 // Separate component for a match pair with connector
 function MatchPair({
   match,
-  players,
-  scores,
   showConnector,
   connectorType = "right",
   className,
   isFinal,
+  getPlayerName,
+  getPlayerScore,
 }: {
   match: Match | undefined;
-  players: Player[] | undefined;
-  scores: Score[] | undefined;
   showConnector: boolean;
   connectorType: "right" | "left" | undefined;
   className?: string;
   isFinal?: boolean;
-}) {
-  const getPlayerName = (playerId: string | null | undefined) => {
-    if (!playerId) return ""; // Or "Väntar på spelare"
-    return players?.find((p) => p.id === playerId)?.name ?? "Okänd";
-  };
-
-  const getPlayerScore = (
+  getPlayerName: (playerId: string | null | undefined) => string;
+  getPlayerScore: (
     matchId: string | undefined,
     playerType: "player1" | "player2",
-  ) => {
-    if (!match || !matchId) return "";
-    const score = scores?.find((s) => s.matchId === matchId);
-    if (!score) return "";
-    return playerType === "player1" ? score.player1Score : score.player2Score;
-  };
-
+  ) => string | number;
+}) {
   return (
     <div className="relative">
       {showConnector && (
         <svg
           className={cn(
-            "absolute top-[-30px] h-[210px] w-16",
-            connectorType === "right" ? "-right-16" : "-left-16",
+            "tv:top-[-30px] tv:h-[210px] tv:w-16 absolute md:top-[-10px] md:h-[180px] md:w-8 [@media(max-width:600px)]:hidden",
+            connectorType === "right"
+              ? "tv:-right-16 md:-right-8"
+              : "tv:-left-16 md:-left-8",
           )}
           viewBox="0 0 64 100"
           fill="none"
@@ -407,10 +491,17 @@ function MatchPair({
         </svg>
       )}
       <div className={cn("flex flex-col gap-10", isFinal && "gap-0")}>
-        <Card className={cn("min-h-14 w-[200px] border-primary/20", className)}>
-          <CardContent className="flex items-center justify-between p-3 md:p-4">
-            <div className="font-medium">{getPlayerName(match?.player1Id)}</div>
-            <div className="font-bold">
+        <Card
+          className={cn(
+            "tv:w-[200px] flex min-h-14 w-[150px] items-center justify-center border-primary/20",
+            className,
+          )}
+        >
+          <CardContent className="tv:p-4 flex items-center justify-between p-1 md:p-2">
+            <div className="tv:text-base text-xs font-medium">
+              {getPlayerName(match?.player1Id)}
+            </div>
+            <div className="tv:text-base text-xs font-bold">
               {match?.completed ? getPlayerScore(match?.id, "player1") : ""}
             </div>
           </CardContent>
@@ -418,10 +509,17 @@ function MatchPair({
         {isFinal && (
           <div className="text-center text-[80px] font-semibold">Final</div>
         )}
-        <Card className={cn("min-h-14 w-[200px] border-primary/20", className)}>
-          <CardContent className="flex items-center justify-between p-3 md:p-4">
-            <div className="font-medium">{getPlayerName(match?.player2Id)}</div>
-            <div className="font-bold">
+        <Card
+          className={cn(
+            "tv:w-[200px] flex min-h-14 w-[150px] items-center justify-center border-primary/20",
+            className,
+          )}
+        >
+          <CardContent className="tv:p-4 flex items-center justify-between p-1 md:p-2">
+            <div className="tv:text-base text-xs font-medium">
+              {getPlayerName(match?.player2Id)}
+            </div>
+            <div className="tv:text-base text-xs font-bold">
               {match?.completed ? getPlayerScore(match?.id, "player2") : ""}
             </div>
           </CardContent>
