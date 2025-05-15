@@ -7,6 +7,14 @@ import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+const FINAL_BRACKET_ROUND_NUMBER = 4;
+const PLAYOFF_ROUND_NAMES: Record<number, string> = {
+  1: "Åttondelsfinal",
+  2: "Kvartsfinal",
+  3: "Semifinal",
+  4: "Final",
+};
+
 export function PlayoffBracket() {
   const utils = api.useUtils();
   const { toast } = useToast();
@@ -40,6 +48,35 @@ export function PlayoffBracket() {
     api.match.deletePlayoffMatches.useMutation({
       onSuccess: async () => {
         await utils.match.getAll.invalidate();
+        toast({
+          title: "Slutspel raderat",
+          description: "Alla slutspelsmatcher har raderats.",
+        });
+      },
+      onError: (error) => {
+        toast({
+          variant: "destructive",
+          title: "Fel vid radering",
+          description: error.message,
+        });
+      },
+    });
+
+  const { mutate: createNextRoundMatches, isPending: isCreatingNextRound } =
+    api.match.createEmptyPlayoffMatchesForRound.useMutation({
+      onSuccess: async (data) => {
+        await utils.match.getAll.invalidate();
+        toast({
+          title: data.createdNew ? "Nästa omgång genererad" : "Info",
+          description: data.message,
+        });
+      },
+      onError: (error) => {
+        toast({
+          variant: "destructive",
+          title: "Fel vid generering av nästa omgång",
+          description: error.message,
+        });
       },
     });
 
@@ -49,23 +86,92 @@ export function PlayoffBracket() {
 
   const playoffMatches = matches?.filter((match) => match.isPlayoff) ?? [];
 
-  // Define the structure of the playoff bracket
-  const rounds = [
+  const roundsInfo = [
+    // This can be kept local or shared from a constants file
     { round: 1, name: "Åttondelsfinal", matches: 8 },
     { round: 2, name: "Kvartsfinal", matches: 4 },
     { round: 3, name: "Semifinal", matches: 2 },
     { round: 4, name: "Final", matches: 1 },
   ];
 
-  // Group existing matches by round
   const matchesByRound: Record<number, Match[]> = {};
   playoffMatches.forEach((match) => {
     matchesByRound[match.round] ??= [];
     matchesByRound[match.round]!.push(match);
+    // Ensure matches within a round are sorted for consistent display if needed,
+    // though `advanceWinner` now relies on `matchOrderInRound` for logic.
+    // matchesByRound[match.round]!.sort((a, b) => (a.matchOrderInRound ?? 0) - (b.matchOrderInRound ?? 0));
   });
 
-  // If no matches exist yet, show generate button
-  if (!playoffMatches.length && matches && matches.length > 0) {
+  // Sort matches within each round by their order for display consistency
+  for (const roundNum in matchesByRound) {
+    matchesByRound[roundNum]?.sort(
+      (a, b) =>
+        (a.matchOrderInRound ?? Infinity) - (b.matchOrderInRound ?? Infinity),
+    );
+  }
+
+  let nextRoundToGenerateDetails: { roundNumber: number; name: string } | null =
+    null;
+  if (playoffMatches && playoffMatches.length > 0) {
+    const roundsPresent = [...new Set(playoffMatches.map((m) => m.round))].sort(
+      (a, b) => a - b,
+    );
+    if (roundsPresent.length > 0) {
+      const maxRoundPresentWithMatches =
+        roundsPresent[roundsPresent.length - 1];
+
+      if (
+        maxRoundPresentWithMatches &&
+        maxRoundPresentWithMatches < FINAL_BRACKET_ROUND_NUMBER
+      ) {
+        const matchesInMaxRound = playoffMatches.filter(
+          (m) => m.round === maxRoundPresentWithMatches,
+        );
+        const allMatchesInMaxRoundCompleted =
+          matchesInMaxRound.length > 0 &&
+          matchesInMaxRound.every((m) => m.completed);
+
+        if (allMatchesInMaxRoundCompleted) {
+          const nextRoundNumber = maxRoundPresentWithMatches + 1;
+          const matchesInNextRoundExist = playoffMatches.some(
+            (m) => m.round === nextRoundNumber,
+          );
+          if (!matchesInNextRoundExist) {
+            nextRoundToGenerateDetails = {
+              roundNumber: nextRoundNumber,
+              name:
+                PLAYOFF_ROUND_NAMES[nextRoundNumber] ??
+                `Omgång ${nextRoundNumber}`,
+            };
+          }
+        }
+      }
+    }
+  } else if (matches && matches.length > 0 && playoffMatches.length === 0) {
+    // No playoff matches exist yet. Suggest generating Round 1.
+    // This assumes generatePlayoffs might not always be the first step, or it failed.
+    const round1Info = roundsInfo.find((r) => r.round === 1);
+    if (round1Info) {
+      nextRoundToGenerateDetails = {
+        roundNumber: 1,
+        name: PLAYOFF_ROUND_NAMES[1] ?? "Omgång 1",
+      };
+    }
+  }
+
+  if (
+    !playoffMatches.length &&
+    matches &&
+    matches.length > 0 &&
+    !nextRoundToGenerateDetails
+  ) {
+    // This original block was for the main "Generera slutspel" (generatePlayoffs) button
+    // It might still be relevant if `generatePlayoffs` is for seeding the very first players
+    // from group stages into Round 1, and `createEmptyPlayoffMatchesForRound` is for empty structures.
+    // For simplicity, let's assume `generatePlayoffs` button would call your existing
+    // `api.match.generatePlayoffs` which should ideally set up Round 1 with players and `matchOrderInRound`.
+    // The new button below is for subsequent empty rounds.
     return (
       <div className="space-y-4">
         <div className="py-4 text-center text-muted-foreground">
@@ -73,7 +179,9 @@ export function PlayoffBracket() {
         </div>
         <div className="flex justify-center">
           <Button onClick={() => generatePlayoffs()} disabled={isGenerating}>
-            {isGenerating ? "Genererar..." : "Generera slutspel"}
+            {isGenerating
+              ? "Genererar..."
+              : "Generera slutspel (Starta Åttondelsfinal)"}
           </Button>
         </div>
       </div>
@@ -209,10 +317,36 @@ export function PlayoffBracket() {
         </div>
       </div>
 
-      <div className="mt-10 flex justify-start">
-        <Button onClick={() => deletePlayoffMatches()} disabled={isDeleting}>
-          {isDeleting ? "Raderar..." : "Radera slutspelsträd"}
-        </Button>
+      <div className="mt-10 flex flex-wrap justify-center gap-4 md:justify-start">
+        {nextRoundToGenerateDetails &&
+        nextRoundToGenerateDetails.roundNumber > 1 ? (
+          <Button
+            onClick={() =>
+              createNextRoundMatches({
+                roundNumber: nextRoundToGenerateDetails!.roundNumber,
+              })
+            }
+            disabled={isCreatingNextRound}
+            variant="secondary"
+          >
+            {isCreatingNextRound
+              ? "Genererar..."
+              : `Generera matcher för ${nextRoundToGenerateDetails.name}`}
+          </Button>
+        ) : (
+          <Button onClick={() => generatePlayoffs()} disabled={isGenerating}>
+            {isGenerating ? "Genererar..." : "Generera slutspel"}
+          </Button>
+        )}
+        {/* {playoffMatches.length > 0 && (
+          <Button
+            onClick={() => deletePlayoffMatches()}
+            disabled={isDeleting}
+            variant="destructive"
+          >
+            {isDeleting ? "Raderar..." : "Radera hela slutspelsträdet"}
+          </Button>
+        )} */}
       </div>
     </div>
   );
@@ -236,6 +370,21 @@ function MatchPair({
   className?: string;
   isFinal?: boolean;
 }) {
+  const getPlayerName = (playerId: string | null | undefined) => {
+    if (!playerId) return ""; // Or "Väntar på spelare"
+    return players?.find((p) => p.id === playerId)?.name ?? "Okänd";
+  };
+
+  const getPlayerScore = (
+    matchId: string | undefined,
+    playerType: "player1" | "player2",
+  ) => {
+    if (!match || !matchId) return "";
+    const score = scores?.find((s) => s.matchId === matchId);
+    if (!score) return "";
+    return playerType === "player1" ? score.player1Score : score.player2Score;
+  };
+
   return (
     <div className="relative">
       {showConnector && (
@@ -263,17 +412,9 @@ function MatchPair({
       <div className={cn("flex flex-col gap-10", isFinal && "gap-0")}>
         <Card className={cn("min-h-14 w-[200px] border-primary/20", className)}>
           <CardContent className="flex items-center justify-between p-3 md:p-4">
-            <div className="font-medium">
-              {match
-                ? (players?.find((player) => player.id === match.player1Id)
-                    ?.name ?? "")
-                : ""}
-            </div>
+            <div className="font-medium">{getPlayerName(match?.player1Id)}</div>
             <div className="font-bold">
-              {match
-                ? (scores?.find((score) => score.matchId === match.id)
-                    ?.player1Score ?? "")
-                : ""}
+              {match?.completed ? getPlayerScore(match?.id, "player1") : ""}
             </div>
           </CardContent>
         </Card>
@@ -282,17 +423,9 @@ function MatchPair({
         )}
         <Card className={cn("min-h-14 w-[200px] border-primary/20", className)}>
           <CardContent className="flex items-center justify-between p-3 md:p-4">
-            <div className="font-medium">
-              {match
-                ? (players?.find((player) => player.id === match.player2Id)
-                    ?.name ?? "")
-                : ""}
-            </div>
+            <div className="font-medium">{getPlayerName(match?.player2Id)}</div>
             <div className="font-bold">
-              {match
-                ? (scores?.find((score) => score.matchId === match.id)
-                    ?.player2Score ?? "")
-                : ""}
+              {match?.completed ? getPlayerScore(match?.id, "player2") : ""}
             </div>
           </CardContent>
         </Card>

@@ -87,6 +87,13 @@ export function MatchList({ user }: { user: UserData | null }) {
       },
     });
 
+  const { mutate: advanceWinner, isPending: isAdvancing } =
+    api.match.advanceWinner.useMutation({
+      onSuccess: async () => {
+        await utils.match.getAll.invalidate();
+      },
+    });
+
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [player1Score, setPlayer1Score] = useState<number>(0);
   const [player2Score, setPlayer2Score] = useState<number>(0);
@@ -155,10 +162,10 @@ export function MatchList({ user }: { user: UserData | null }) {
             {sortedMatches.map((match) => (
               <TableRow key={match.id}>
                 <TableCell>
-                  {playerMap.get(match.player1Id) ?? "Okänd spelare"}
+                  {playerMap.get(match.player1Id ?? "") ?? "Okänd spelare"}
                 </TableCell>
                 <TableCell>
-                  {playerMap.get(match.player2Id) ?? "Okänd spelare"}
+                  {playerMap.get(match.player2Id ?? "") ?? "Okänd spelare"}
                 </TableCell>
                 <TableCell>
                   {match.isPlayoff ? (
@@ -226,7 +233,8 @@ export function MatchList({ user }: { user: UserData | null }) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="player1Score">
-                  {selectedMatch && playerMap.get(selectedMatch.player1Id)}
+                  {selectedMatch &&
+                    playerMap.get(selectedMatch.player1Id ?? "")}
                 </Label>
                 <Input
                   id="player1Score"
@@ -240,7 +248,8 @@ export function MatchList({ user }: { user: UserData | null }) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="player2Score">
-                  {selectedMatch && playerMap.get(selectedMatch.player2Id)}
+                  {selectedMatch &&
+                    playerMap.get(selectedMatch.player2Id ?? "")}
                 </Label>
                 <Input
                   id="player2Score"
@@ -255,13 +264,24 @@ export function MatchList({ user }: { user: UserData | null }) {
             </div>
             <Button
               className="w-full"
-              onClick={() =>
+              onClick={() => {
                 createScore({
                   matchId: selectedMatch?.id ?? "",
                   player1Score: player1Score ?? 0,
                   player2Score: player2Score ?? 0,
-                })
-              }
+                });
+                if (selectedMatch?.isPlayoff) {
+                  advanceWinner({
+                    currentMatchId: selectedMatch?.id ?? "",
+                    winnerPlayerId: selectedMatch
+                      ? player1Score > player2Score
+                        ? selectedMatch.player1Id
+                        : selectedMatch.player2Id
+                      : "",
+                  });
+                }
+                setDialogOpen(false);
+              }}
               disabled={isSubmitting}
             >
               {isSubmitting ? "Sparar..." : "Spara resultat"}

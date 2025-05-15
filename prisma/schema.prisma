@@ -22,6 +22,9 @@ model Player {
     player2Matches Match[] @relation("player2Matches")
     player1PlayoffMatches PlayoffMatch[] @relation("player1PlayoffMatches")
     player2PlayoffMatches PlayoffMatch[] @relation("player2PlayoffMatches")
+    matchesAsPlayer1 Match[] @relation("MatchPlayer1")
+    matchesAsPlayer2 Match[] @relation("MatchPlayer2")
+    wonMatches       Match[] @relation("MatchWinner")
 }
 
 model Group {
@@ -45,18 +48,25 @@ model PlayerGroup {
 
 model Match {
     id        String   @id @default(uuid())
-    player1Id String
-    player2Id String
+    player1Id String?
+    player2Id String?
     groupId   String?
     round     Int
     scheduledTime DateTime?
     completed   Boolean @default(false)
     isPlayoff   Boolean @default(false)
+    winnerId   String?
+    matchOrderInRound Int?
 
-    player1 Player @relation("player1Matches", fields: [player1Id], references: [id])
-    player2 Player @relation("player2Matches", fields: [player2Id], references: [id])
+    player1 Player? @relation("player1Matches", fields: [player1Id], references: [id])
+    player2 Player? @relation("player2Matches", fields: [player2Id], references: [id])
     group   Group? @relation(fields: [groupId], references: [id])
     scores Score[]
+    playOffplayer1    Player?  @relation("MatchPlayer1", fields: [player1Id], references: [id], map: "match_playoff_player1_fkey")
+    playOffplayer2    Player?  @relation("MatchPlayer2", fields: [player2Id], references: [id], map: "match_playoff_player2_fkey")
+    winner     Player?  @relation("MatchWinner", fields: [winnerId], references: [id])
+    createdAt         DateTime  @default(now())
+    updatedAt         DateTime  @updatedAt @default(now())
 }
 
 model Score {
