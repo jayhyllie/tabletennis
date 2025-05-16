@@ -727,4 +727,23 @@ export const matchRouter = createTRPCRouter({
         };
       });
     }),
+  updateMatchScore: publicProcedure
+    .input(
+      z.object({
+        matchId: z.string(),
+        player1Score: z.number().int().min(0),
+        player2Score: z.number().int().min(0),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { matchId, player1Score, player2Score } = input;
+
+      return ctx.db.score.update({
+        where: { matchId },
+        data: {
+          player1Score,
+          player2Score,
+        },
+      });
+    }),
 });

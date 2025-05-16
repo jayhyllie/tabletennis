@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Match } from "@prisma/client";
 import { api } from "@/trpc/react";
 import type { UserData } from "./group-client";
+import { Pencil } from "lucide-react";
 
 export function MatchList({ user }: { user: UserData | null }) {
   const utils = api.useUtils();
@@ -175,7 +176,16 @@ export function MatchList({ user }: { user: UserData | null }) {
                       size="sm"
                       onClick={() => openScoreDialog(match)}
                     >
-                      Redigera resultat
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {match.completed && user?.role === "admin" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openScoreDialog(match)}
+                    >
+                      <Pencil className="h-4 w-4" />
                     </Button>
                   )}
                 </TableCell>

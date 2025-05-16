@@ -316,7 +316,14 @@ export function PlayoffBracket() {
           {/* Left side of bracket */}
           <div className="tv:gap-32 col-span-3 row-span-8 flex h-full w-fit items-center gap-12">
             <div className="flex-1 space-y-4">
-              <h4 className="text-center text-2xl font-bold">Åttondelsfinal</h4>
+              <div className="space-y-2">
+                <h4 className="text-center text-2xl font-bold">
+                  Åttondelsfinal
+                </h4>
+                <p className="text-center text-sm text-muted-foreground">
+                  Best of 3
+                </p>
+              </div>
               <div className="tv:space-y-32 space-y-16">
                 {Array.from({ length: 4 }).map((_, index) => {
                   const match = matchesByRound[1]?.[index];
@@ -335,7 +342,12 @@ export function PlayoffBracket() {
             </div>
 
             <div className="flex-1 space-y-4">
-              <h4 className="text-center text-2xl font-bold">Kvartsfinal</h4>
+              <div className="space-y-2">
+                <h4 className="text-center text-2xl font-bold">Kvartsfinal</h4>
+                <p className="text-center text-sm text-muted-foreground">
+                  Best of 3
+                </p>
+              </div>
               <div className="tv:space-y-96 space-y-64">
                 {Array.from({ length: 2 }).map((_, index) => {
                   const match = matchesByRound[2]?.[index];
@@ -355,7 +367,12 @@ export function PlayoffBracket() {
             </div>
 
             <div className="flex-1 space-y-4">
-              <h4 className="text-center text-2xl font-bold">Semifinal</h4>
+              <div className="space-y-2">
+                <h4 className="text-center text-2xl font-bold">Semifinal</h4>
+                <p className="text-center text-sm text-muted-foreground">
+                  Best of 3
+                </p>
+              </div>
               <div className="pt-4">
                 <MatchPair
                   match={matchesByRound[3]?.[0]}
@@ -386,7 +403,12 @@ export function PlayoffBracket() {
           {/* Right side of bracket */}
           <div className="tv:gap-32 col-span-3 row-span-8 flex h-full w-fit items-center gap-12">
             <div className="flex-1 space-y-4">
-              <h4 className="text-center text-2xl font-bold">Semifinal</h4>
+              <div className="space-y-2">
+                <h4 className="text-center text-2xl font-bold">Semifinal</h4>
+                <p className="text-center text-sm text-muted-foreground">
+                  Best of 3
+                </p>
+              </div>
               <div className="pt-4">
                 <MatchPair
                   match={matchesByRound[3]?.[1]}
@@ -399,7 +421,12 @@ export function PlayoffBracket() {
             </div>
 
             <div className="flex-1 space-y-4">
-              <h4 className="text-center text-2xl font-bold">Kvartsfinal</h4>
+              <div className="space-y-2">
+                <h4 className="text-center text-2xl font-bold">Kvartsfinal</h4>
+                <p className="text-center text-sm text-muted-foreground">
+                  Best of 3
+                </p>
+              </div>
               <div className="tv:space-y-96 space-y-64">
                 {Array.from({ length: 2 }).map((_, index) => {
                   const match = matchesByRound[2]?.[index + 2];
@@ -418,7 +445,14 @@ export function PlayoffBracket() {
             </div>
 
             <div className="flex-1 space-y-4">
-              <h4 className="text-center text-2xl font-bold">Åttondelsfinal</h4>
+              <div className="space-y-2">
+                <h4 className="text-center text-2xl font-bold">
+                  Åttondelsfinal
+                </h4>
+                <p className="text-center text-sm text-muted-foreground">
+                  Best of 3
+                </p>
+              </div>
               <div className="tv:space-y-32 space-y-16">
                 {Array.from({ length: 4 }).map((_, index) => {
                   const match = matchesByRound[1]?.[index + 4];
@@ -497,7 +531,7 @@ function MatchPair({
             className,
           )}
         >
-          <CardContent className="tv:p-4 flex items-center justify-between p-1 md:p-2">
+          <CardContent className="tv:p-4 flex items-center justify-between gap-4 p-1 md:p-2">
             <div className="tv:text-base text-xs font-medium">
               {getPlayerName(match?.player1Id)}
             </div>
@@ -507,7 +541,12 @@ function MatchPair({
           </CardContent>
         </Card>
         {isFinal && (
-          <div className="text-center text-[80px] font-semibold">Final</div>
+          <div className="my-8 flex flex-col items-center gap-0">
+            <h4 className="text-center text-5xl font-bold">Final</h4>
+            <p className="text-center text-sm text-muted-foreground">
+              Best of 5
+            </p>
+          </div>
         )}
         <Card
           className={cn(
@@ -515,7 +554,7 @@ function MatchPair({
             className,
           )}
         >
-          <CardContent className="tv:p-4 flex items-center justify-between p-1 md:p-2">
+          <CardContent className="tv:p-4 flex items-center justify-between gap-4 p-1 md:p-2">
             <div className="tv:text-base text-xs font-medium">
               {getPlayerName(match?.player2Id)}
             </div>
