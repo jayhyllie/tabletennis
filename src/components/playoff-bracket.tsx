@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import type { Match, Player, Score } from "@prisma/client";
+import type { Match } from "@prisma/client";
 import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
