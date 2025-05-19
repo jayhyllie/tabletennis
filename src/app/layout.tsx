@@ -20,6 +20,7 @@ import { api } from "@/trpc/react";
 import { MobileNav } from "@/components/mobile-nav";
 import { Table2Icon as TableTennis } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -29,6 +30,7 @@ const geist = Geist({
 function ClerkAuthWrapper({ children }: { children: React.ReactNode }) {
   const { isLoaded, user } = useUser();
   const { mutate: createPlayer } = api.player.createFromClerk.useMutation();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -44,12 +46,28 @@ function ClerkAuthWrapper({ children }: { children: React.ReactNode }) {
     }
   }, [isLoaded, user, createPlayer]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {pathname?.startsWith("/playoff-embed") ? (
+        children
+      ) : (
+        <>
+          <SignedOut>
+            <RedirectToSignIn />
+          </SignedOut>
+          <SignedIn>{children}</SignedIn>
+        </>
+      )}
+    </>
+  );
 }
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const pathname = usePathname();
+  const isPlayoffEmbed = pathname?.startsWith("/playoff-embed");
+
   return (
     <ClerkProvider
       appearance={{
@@ -66,27 +84,29 @@ export default function RootLayout({
             >
               <ClerkAuthWrapper>
                 <div className="flex min-h-screen flex-col">
-                  <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 flex h-16 w-full justify-between border-b px-4 backdrop-blur md:justify-evenly">
-                    <div className="flex items-center gap-2">
-                      <Link href="/" className="flex items-center gap-2">
-                        <TableTennis className="hidden h-6 w-6 md:inline-block dark:text-white" />
-                        <span className="hidden font-bold sm:inline-block dark:text-white">
-                          Sogeti Pingis
-                        </span>
-                      </Link>
-                      <MobileNav navItems={navItems} />
-                    </div>
-                    <Navbar />
-                    <div className="flex">
-                      <SignedOut>
-                        <RedirectToSignIn />
-                      </SignedOut>
-                      <SignedIn>
-                        <UserButton />
-                      </SignedIn>
-                    </div>
-                  </header>
-                  <main className="bg-background flex-1">{children}</main>
+                  {!isPlayoffEmbed && (
+                    <header className="sticky top-0 z-50 flex h-16 w-full justify-between border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:justify-evenly">
+                      <div className="flex items-center gap-2">
+                        <Link href="/" className="flex items-center gap-2">
+                          <TableTennis className="hidden h-6 w-6 dark:text-white md:inline-block" />
+                          <span className="hidden font-bold dark:text-white sm:inline-block">
+                            Sogeti Pingis
+                          </span>
+                        </Link>
+                        <MobileNav navItems={navItems} />
+                      </div>
+                      <Navbar />
+                      <div className="flex">
+                        <SignedOut>
+                          <RedirectToSignIn />
+                        </SignedOut>
+                        <SignedIn>
+                          <UserButton />
+                        </SignedIn>
+                      </div>
+                    </header>
+                  )}
+                  <main className="flex-1 bg-background">{children}</main>
                 </div>
               </ClerkAuthWrapper>
             </ThemeProvider>
