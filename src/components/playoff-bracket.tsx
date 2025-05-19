@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import useMediaQuery from "@/hooks/use-media-query";
 const FINAL_BRACKET_ROUND_NUMBER = 4;
-const PLAYOFF_ROUND_NAMES: Record<number, string> = {
+export const PLAYOFF_ROUND_NAMES: Record<number, string> = {
   1: "Åttondelsfinal",
   2: "Kvartsfinal",
   3: "Semifinal",

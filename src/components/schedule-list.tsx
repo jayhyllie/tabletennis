@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Match } from "@prisma/client";
 import { api } from "@/trpc/react";
+import { PLAYOFF_ROUND_NAMES } from "./playoff-bracket";
 
 export function ScheduleList() {
   const { data: matches, isPending: isLoadingMatches } =
@@ -69,6 +70,7 @@ export function ScheduleList() {
                   <TableHead>Spelare 1</TableHead>
                   <TableHead>Spelare 2</TableHead>
                   <TableHead>Status</TableHead>
+                  {groupId === "playoffs" && <TableHead>Runda</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -87,6 +89,13 @@ export function ScheduleList() {
                         <Badge variant="outline">Ej spelad</Badge>
                       )}
                     </TableCell>
+                    {groupId === "playoffs" && (
+                      <TableCell>
+                        <Badge variant="outline">
+                          {PLAYOFF_ROUND_NAMES[match.round]}
+                        </Badge>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
