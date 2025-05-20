@@ -7,6 +7,7 @@ import { api } from "@/trpc/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import useMediaQuery from "@/hooks/use-media-query";
+import type { UserData } from "./group-client";
 const FINAL_BRACKET_ROUND_NUMBER = 4;
 export const PLAYOFF_ROUND_NAMES: Record<number, string> = {
   1: "Åttondelsfinal",
@@ -15,7 +16,7 @@ export const PLAYOFF_ROUND_NAMES: Record<number, string> = {
   4: "Final",
 };
 
-export function PlayoffBracket() {
+export function PlayoffBracket({ user }: { user: UserData | null }) {
   const utils = api.useUtils();
   const { toast } = useToast();
 
@@ -82,9 +83,6 @@ export function PlayoffBracket() {
   playoffMatches.forEach((match) => {
     matchesByRound[match.round] ??= [];
     matchesByRound[match.round]!.push(match);
-    // Ensure matches within a round are sorted for consistent display if needed,
-    // though `advanceWinner` now relies on `matchOrderInRound` for logic.
-    // matchesByRound[match.round]!.sort((a, b) => (a.matchOrderInRound ?? 0) - (b.matchOrderInRound ?? 0));
   });
 
   // Sort matches within each round by their order for display consistency
@@ -183,7 +181,8 @@ export function PlayoffBracket() {
   const actionButtons = (
     <div className="mt-10 flex flex-wrap justify-center gap-4 px-4 md:justify-start">
       {nextRoundToGenerateDetails &&
-      nextRoundToGenerateDetails.roundNumber > 1 ? (
+      nextRoundToGenerateDetails.roundNumber > 1 &&
+      user?.role === "admin" ? (
         <Button
           onClick={() =>
             createNextRoundMatches({
