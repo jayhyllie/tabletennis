@@ -16,7 +16,7 @@ export const PLAYOFF_ROUND_NAMES: Record<number, string> = {
   4: "Final",
 };
 
-export function PlayoffBracket({ user }: { user: UserData | null }) {
+export function PlayoffBracket({ user }: { user?: UserData | null }) {
   const utils = api.useUtils();
   const { toast } = useToast();
 
