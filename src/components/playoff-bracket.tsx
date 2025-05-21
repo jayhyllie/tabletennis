@@ -177,6 +177,15 @@ export function PlayoffBracket({ user }: { user?: UserData | null }) {
     return playerType === "player1" ? score.player1Score : score.player2Score;
   };
 
+  const getWinnerPlayerId = (match: Match | undefined) => {
+    if (!match) return null;
+    const score = scores?.find((s) => s.matchId === match.id);
+    if (!score) return null;
+    return score.player1Score > score.player2Score
+      ? match.player1Id
+      : match.player2Id;
+  };
+
   // Common buttons logic
   const actionButtons = (
     <div className="mt-10 flex flex-wrap justify-center gap-4 px-4 md:justify-start">
@@ -217,31 +226,6 @@ export function PlayoffBracket({ user }: { user?: UserData | null }) {
         </div>
         {roundsInfo.map((round) => {
           const currentRoundMatches = matchesByRound[round.round] ?? [];
-          if (
-            currentRoundMatches.length === 0 &&
-            round.round > 1 &&
-            !(matchesByRound[round.round - 1] ?? []).every((m) => m.completed)
-          ) {
-            // Don't show empty future rounds if previous round is not completed
-            return null;
-          }
-          if (
-            currentRoundMatches.length === 0 &&
-            !nextRoundToGenerateDetails &&
-            round.round === 1 &&
-            playoffMatches.length > 0
-          ) {
-            // If round 1 has no matches but other playoff matches exist (e.g. higher rounds somehow), don't show empty round 1
-            return null;
-          }
-          if (
-            currentRoundMatches.length === 0 &&
-            round.round >
-              (nextRoundToGenerateDetails?.roundNumber ??
-                FINAL_BRACKET_ROUND_NUMBER)
-          ) {
-            return null; // Don't show rounds that are beyond what's generated or to be generated
-          }
 
           return (
             <div key={round.round} className="mb-8">
@@ -250,38 +234,53 @@ export function PlayoffBracket({ user }: { user?: UserData | null }) {
               </h3>
               {currentRoundMatches.length > 0 ? (
                 <div className="space-y-3">
-                  {currentRoundMatches.map((match) => (
-                    <Card
-                      key={match.id}
-                      className="border-primary/80 shadow-lg"
-                    >
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">
-                            {getPlayerName(match.player1Id)}
-                          </span>
-                          <span className="font-bold">
-                            {match.completed
-                              ? getPlayerScore(match.id, "player1")
-                              : "-"}
-                          </span>
-                        </div>
-                        <div className="my-1 text-center text-sm text-muted-foreground">
-                          vs
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium">
-                            {getPlayerName(match.player2Id)}
-                          </span>
-                          <span className="font-bold">
-                            {match.completed
-                              ? getPlayerScore(match.id, "player2")
-                              : "-"}
-                          </span>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {currentRoundMatches.map((match) => {
+                    const winnerId = getWinnerPlayerId(match);
+                    return (
+                      <Card
+                        key={match.id}
+                        className="border-primary/80 shadow-lg"
+                      >
+                        <CardContent className="p-3">
+                          <div
+                            className={cn(
+                              "flex items-center justify-between",
+                              winnerId === match.player1Id &&
+                                "font-semibold text-green-600",
+                            )}
+                          >
+                            <span className="font-medium">
+                              {getPlayerName(match.player1Id)}
+                            </span>
+                            <span className="font-bold">
+                              {match.completed
+                                ? getPlayerScore(match.id, "player1")
+                                : "-"}
+                            </span>
+                          </div>
+                          <div className="my-1 text-center text-sm text-muted-foreground">
+                            vs
+                          </div>
+                          <div
+                            className={cn(
+                              "flex items-center justify-between",
+                              winnerId === match.player2Id &&
+                                "font-semibold text-green-600",
+                            )}
+                          >
+                            <span className="font-medium">
+                              {getPlayerName(match.player2Id)}
+                            </span>
+                            <span className="font-bold">
+                              {match.completed
+                                ? getPlayerScore(match.id, "player2")
+                                : "-"}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="py-4 text-center text-muted-foreground">
@@ -334,6 +333,7 @@ export function PlayoffBracket({ user }: { user?: UserData | null }) {
                       connectorType="right"
                       getPlayerName={getPlayerName}
                       getPlayerScore={getPlayerScore}
+                      winnerPlayerId={getWinnerPlayerId(match)}
                     />
                   );
                 })}
@@ -359,6 +359,7 @@ export function PlayoffBracket({ user }: { user?: UserData | null }) {
                       className=""
                       getPlayerName={getPlayerName}
                       getPlayerScore={getPlayerScore}
+                      winnerPlayerId={getWinnerPlayerId(match)}
                     />
                   );
                 })}
@@ -379,6 +380,7 @@ export function PlayoffBracket({ user }: { user?: UserData | null }) {
                   connectorType="right"
                   getPlayerName={getPlayerName}
                   getPlayerScore={getPlayerScore}
+                  winnerPlayerId={getWinnerPlayerId(matchesByRound[3]?.[0])}
                 />
               </div>
             </div>
@@ -395,6 +397,7 @@ export function PlayoffBracket({ user }: { user?: UserData | null }) {
                 isFinal={true}
                 getPlayerName={getPlayerName}
                 getPlayerScore={getPlayerScore}
+                winnerPlayerId={getWinnerPlayerId(matchesByRound[4]?.[0])}
               />
             </div>
           </div>
@@ -415,6 +418,7 @@ export function PlayoffBracket({ user }: { user?: UserData | null }) {
                   connectorType="left"
                   getPlayerName={getPlayerName}
                   getPlayerScore={getPlayerScore}
+                  winnerPlayerId={getWinnerPlayerId(matchesByRound[3]?.[1])}
                 />
               </div>
             </div>
@@ -437,6 +441,7 @@ export function PlayoffBracket({ user }: { user?: UserData | null }) {
                       connectorType="left"
                       getPlayerName={getPlayerName}
                       getPlayerScore={getPlayerScore}
+                      winnerPlayerId={getWinnerPlayerId(match)}
                     />
                   );
                 })}
@@ -463,6 +468,7 @@ export function PlayoffBracket({ user }: { user?: UserData | null }) {
                       connectorType="left"
                       getPlayerName={getPlayerName}
                       getPlayerScore={getPlayerScore}
+                      winnerPlayerId={getWinnerPlayerId(match)}
                     />
                   );
                 })}
@@ -485,6 +491,7 @@ function MatchPair({
   isFinal,
   getPlayerName,
   getPlayerScore,
+  winnerPlayerId,
 }: {
   match: Match | undefined;
   showConnector: boolean;
@@ -496,6 +503,7 @@ function MatchPair({
     matchId: string | undefined,
     playerType: "player1" | "player2",
   ) => string | number;
+  winnerPlayerId: string | null | undefined;
 }) {
   return (
     <div className="relative">
@@ -527,6 +535,7 @@ function MatchPair({
         <Card
           className={cn(
             "tv:w-[200px] flex min-h-14 w-[150px] items-center justify-center border-primary/20",
+            winnerPlayerId === match?.player1Id && "bg-green-100",
             className,
           )}
         >
@@ -550,6 +559,7 @@ function MatchPair({
         <Card
           className={cn(
             "tv:w-[200px] flex min-h-14 w-[150px] items-center justify-center border-primary/20",
+            winnerPlayerId === match?.player2Id && "bg-green-100",
             className,
           )}
         >
