@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Match } from "@prisma/client";
 import { api } from "@/trpc/react";
-import { PLAYOFF_ROUND_NAMES } from "./playoff-bracket";
+import { PLAYOFF_ROUND_NAMES } from "@/lib/types";
 
 export function ScheduleList() {
   const { data: matches, isPending: isLoadingMatches } =
